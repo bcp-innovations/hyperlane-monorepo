@@ -1,5 +1,12 @@
 # @hyperlane-xyz/core
 
+## 5.11.2
+
+### Patch Changes
+
+- ba50e62f: Added ESLint configuration and dependency to enforce Node.js module restrictions
+  - @hyperlane-xyz/utils@8.5.1
+
 ## 5.11.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @hyperlane-xyz/sdk
 
+## 8.5.1
+
+### Patch Changes
+
+- ac984a17: Fix contract address filtering to remove undefined factory addresses from the addresses map
+- ba50e62f: Added ESLint configuration and dependency to enforce Node.js module restrictions
+- Updated dependencies [ba50e62f]
+  - @hyperlane-xyz/core@5.11.2
+  - @hyperlane-xyz/utils@8.5.1
+
 ## 8.5.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @hyperlane-xyz/widgets
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies [ac984a17]
+- Updated dependencies [ba50e62f]
+  - @hyperlane-xyz/sdk@8.5.1
+  - @hyperlane-xyz/utils@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes
