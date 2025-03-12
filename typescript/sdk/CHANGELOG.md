@@ -1,5 +1,16 @@
 # @hyperlane-xyz/sdk
 
+## 8.9.1
+
+### Patch Changes
+
+- 88970a78c: Deploy new scaled warp route bytecode
+- Updated dependencies [88970a78c]
+- Updated dependencies [88970a78c]
+- Updated dependencies [88970a78c]
+  - @hyperlane-xyz/core@6.0.0
+  - @hyperlane-xyz/utils@8.9.1
+
 ## 8.9.0
 
 ### Minor Changes

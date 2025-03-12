@@ -1,5 +1,7 @@
 # @hyperlane-xyz/utils
 
+## 8.9.1
+
 ## 8.9.0
 
 ### Minor Changes
