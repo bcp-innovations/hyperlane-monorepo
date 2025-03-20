@@ -7,6 +7,7 @@ import {
   ProtocolType,
   addressToBytes32,
   assert,
+  convertToProtocolAddress,
   isAddressCosmos,
 } from '@hyperlane-xyz/utils';
 
@@ -214,15 +215,17 @@ export class CosmHypCollateralAdapter
 
     const provider = await this.getProvider();
 
-    const { igp } = await provider.query.postDispatch.Igp({
-      id: params.interchainGas.addressOrDenom!,
-    });
+    // tokenId -> igp ID
 
-    if (!igp) {
-      throw new Error(
-        `Failed to find IGP for address: ${params.interchainGas.addressOrDenom}`,
-      );
-    }
+    // const { igp } = await provider.query.postDispatch.Igp({
+    //   id: params.interchainGas.addressOrDenom!,
+    // });
+
+    // if (!igp) {
+    //   throw new Error(
+    //     `Failed to find IGP for address: ${params.interchainGas.addressOrDenom}`,
+    //   );
+    // }
 
     const { remote_routers } = await provider.query.warp.RemoteRouters({
       id: this.tokenId,
@@ -242,13 +245,16 @@ export class CosmHypCollateralAdapter
       typeUrl: '/hyperlane.warp.v1.MsgRemoteTransfer',
       value: {
         sender: params.fromAccountOwner,
-        recipient: addressToBytes32(params.recipient, ProtocolType.Cosmos),
+        recipient: addressToBytes32(
+          convertToProtocolAddress(params.recipient, ProtocolType.Ethereum),
+          ProtocolType.Ethereum,
+        ),
         amount: params.weiAmountOrId.toString(),
         token_id: this.tokenId,
         destination_domain: params.destination,
         gas_limit: router.gas,
         max_fee: {
-          denom: igp.denom,
+          denom: 'tkyve',
           amount: params.interchainGas.amount.toString(),
         },
       },

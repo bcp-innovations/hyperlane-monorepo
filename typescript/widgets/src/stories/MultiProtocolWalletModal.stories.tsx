@@ -43,26 +43,24 @@ function MinimalDapp({ protocols }: { protocols?: ProtocolType[] }) {
     <EthereumWalletProvider>
       <CosmosWalletProvider>
         <SolanaWalletProvider>
-          <StarknetWalletProvider>
-            <div className="htw-space-y-4">
-              <h1>CONNECT BUTTON</h1>
-              <ConnectWalletButton
-                multiProvider={multiProvider}
-                onClickWhenConnected={open}
-                onClickWhenUnconnected={open}
-              />
-              <h1>ACCOUNT SUMMARY</h1>
-              <AccountList
-                multiProvider={multiProvider}
-                onClickConnectWallet={open}
-              />
-            </div>
-            <MultiProtocolWalletModal
-              isOpen={isOpen}
-              close={close}
-              protocols={protocols}
+          <div className="htw-space-y-4">
+            <h1>CONNECT BUTTON</h1>
+            <ConnectWalletButton
+              multiProvider={multiProvider}
+              onClickWhenConnected={open}
+              onClickWhenUnconnected={open}
             />
-          </StarknetWalletProvider>
+            <h1>ACCOUNT SUMMARY</h1>
+            <AccountList
+              multiProvider={multiProvider}
+              onClickConnectWallet={open}
+            />
+          </div>
+          <MultiProtocolWalletModal
+            isOpen={isOpen}
+            close={close}
+            protocols={protocols}
+          />
         </SolanaWalletProvider>
       </CosmosWalletProvider>
     </EthereumWalletProvider>
