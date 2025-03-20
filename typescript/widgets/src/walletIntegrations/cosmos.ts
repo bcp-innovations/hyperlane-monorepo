@@ -136,7 +136,7 @@ export function useCosmosTransactionFns(
         await onSwitchNetwork(chainName);
 
       logger.debug(`Sending tx on chain ${chainName}`);
-      const { getSigningCosmWasmClient, getRpcEndpoint, getOfflineSigner } =
+      const { getSigningCosmWasmClient, chain, getOfflineSigner } =
         chainContext;
       let result: ExecuteResult | DeliverTxResponse;
       let txDetails: IndexedTx | null;
@@ -149,10 +149,9 @@ export function useCosmosTransactionFns(
         );
         txDetails = await client.getTx(result.transactionHash);
       } else if (tx.type === ProviderType.CosmJs) {
-        const rpc = await getRpcEndpoint();
         const signer = getOfflineSigner();
         const client = await SigningHyperlaneModuleClient.connectWithSigner(
-          rpc,
+          chain.apis!.rpc![0].address,
           signer,
           {
             // set zero gas price here so it does not error. actual gas price

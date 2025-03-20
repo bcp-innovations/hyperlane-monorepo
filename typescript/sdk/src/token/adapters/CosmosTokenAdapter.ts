@@ -199,7 +199,7 @@ export class CosmHypCollateralAdapter
     });
 
     return {
-      addressOrDenom: this.tokenId,
+      addressOrDenom: gas_payment[0].denom,
       amount: BigInt(gas_payment[0].amount),
     };
   }
@@ -215,18 +215,6 @@ export class CosmHypCollateralAdapter
 
     const provider = await this.getProvider();
 
-    // tokenId -> igp ID
-
-    // const { igp } = await provider.query.postDispatch.Igp({
-    //   id: params.interchainGas.addressOrDenom!,
-    // });
-
-    // if (!igp) {
-    //   throw new Error(
-    //     `Failed to find IGP for address: ${params.interchainGas.addressOrDenom}`,
-    //   );
-    // }
-
     const { remote_routers } = await provider.query.warp.RemoteRouters({
       id: this.tokenId,
     });
@@ -238,6 +226,12 @@ export class CosmHypCollateralAdapter
     if (!router) {
       throw new Error(
         `Failed to find remote router for token id and destination: ${this.tokenId},${params.destination}`,
+      );
+    }
+
+    if (!params.interchainGas.addressOrDenom) {
+      throw new Error(
+        `Require denom for max fee, didn't receive and denom in the interchainGas quote`,
       );
     }
 
@@ -254,7 +248,7 @@ export class CosmHypCollateralAdapter
         destination_domain: params.destination,
         gas_limit: router.gas,
         max_fee: {
-          denom: 'tkyve',
+          denom: params.interchainGas.addressOrDenom || '',
           amount: params.interchainGas.amount.toString(),
         },
       },

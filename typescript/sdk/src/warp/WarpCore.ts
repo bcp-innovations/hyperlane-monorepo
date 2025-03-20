@@ -158,12 +158,19 @@ export class WarpCore {
       gasAddressOrDenom = quote.addressOrDenom;
     }
 
+    // the addressOrDenom is set for the cosmos module
+    // it is necessary because the igp can have any denom
+    // check if the configured denom is equal to the native denom
+    // otherwise search
+
+    const nativeToken = Token.FromChainMetadataNativeToken(
+      this.multiProvider.getChainMetadata(originName),
+    );
+
     let igpToken: Token;
-    if (!gasAddressOrDenom) {
+    if (!gasAddressOrDenom || nativeToken.addressOrDenom == gasAddressOrDenom) {
       // An empty/undefined addressOrDenom indicates the native token
-      igpToken = Token.FromChainMetadataNativeToken(
-        this.multiProvider.getChainMetadata(originName),
-      );
+      igpToken = nativeToken;
     } else {
       const searchResult = this.findToken(originName, gasAddressOrDenom);
       assert(searchResult, `Fee token ${gasAddressOrDenom} is unknown`);
