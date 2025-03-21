@@ -122,6 +122,8 @@ export class HyperlaneModuleClient extends StargateClient {
       setupWarpExtension,
     );
 
+    this;
+
     this.registry = new Registry([...defaultRegistryTypes]);
     // register all the custom tx types
     for (const typeUrl in REGISTRY) {
@@ -207,6 +209,20 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
     const client = await connectComet(endpoint);
     const [account] = await signer.getAccounts();
     return new SigningHyperlaneModuleClient(client, signer, account, options);
+  }
+
+  static async createWithSigner(
+    cometclient: CometClient,
+    signer: OfflineSigner,
+    options: SigningStargateClientOptions = {},
+  ): Promise<SigningHyperlaneModuleClient> {
+    const [account] = await signer.getAccounts();
+    return new SigningHyperlaneModuleClient(
+      cometclient,
+      signer,
+      account,
+      options,
+    );
   }
 
   private async signTx(
