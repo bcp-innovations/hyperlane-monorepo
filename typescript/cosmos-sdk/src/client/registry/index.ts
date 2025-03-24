@@ -30,109 +30,209 @@ import {
 export const REGISTRY = {
   // Core transactions
   MsgCreateMailbox: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateMailbox',
-    aminoType: 'hyperlane/v1/MsgCreateMailbox',
-    proto: MsgCreateMailbox,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateMailbox',
+      converter: MsgCreateMailbox,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateMailbox',
+      converter: null,
+    },
   },
   MsgSetMailbox: {
-    typeUrl: '/hyperlane.core.v1.MsgSetMailbox',
-    aminoType: 'hyperlane/v1/MsgSetMailbox',
-    proto: MsgSetMailbox,
+    proto: {
+      type: '/hyperlane.core.v1.MsgSetMailbox',
+      converter: MsgSetMailbox,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgSetMailbox',
+      converter: null,
+    },
   },
   MsgProcessMessage: {
-    typeUrl: '/hyperlane.core.v1.MsgProcessMessage',
-    aminoType: 'hyperlane/v1/MsgProcessMessage',
-    proto: MsgProcessMessage,
+    proto: {
+      type: '/hyperlane.core.v1.MsgProcessMessage',
+      converter: MsgProcessMessage,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgProcessMessage',
+      converter: null,
+    },
   },
 
   // Interchain security transactions
   MsgCreateMessageIdMultisigIsm: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateMessageIdMultisigIsm',
-    aminoType: 'hyperlane/v1/MsgCreateMessageIdMultisigIsm',
-    proto: MsgCreateMessageIdMultisigIsm,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateMessageIdMultisigIsm',
+      converter: MsgCreateMessageIdMultisigIsm,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateMessageIdMultisigIsm',
+      converter: null,
+    },
   },
   MsgCreateMerkleRootMultisigIsm: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateMerkleRootMultisigIsm',
-    aminoType: 'hyperlane/v1/MsgCreateMerkleRootMultisigIsm',
-    proto: MsgCreateMerkleRootMultisigIsm,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateMerkleRootMultisigIsm',
+      converter: MsgCreateMerkleRootMultisigIsm,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateMerkleRootMultisigIsm',
+      converter: null,
+    },
   },
   MsgCreateNoopIsm: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateNoopIsm',
-    aminoType: 'hyperlane/v1/MsgCreateNoopIsm',
-    proto: MsgCreateNoopIsm,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateNoopIsm',
+      converter: MsgCreateNoopIsm,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateNoopIsm',
+      converter: null,
+    },
   },
   MsgAnnounceValidator: {
-    typeUrl: '/hyperlane.core.v1.MsgAnnounceValidator',
-    aminoType: 'hyperlane/v1/MsgAnnounceValidator',
-    proto: MsgAnnounceValidator,
+    proto: {
+      type: '/hyperlane.core.v1.MsgAnnounceValidator',
+      converter: MsgAnnounceValidator,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgAnnounceValidator',
+      converter: null,
+    },
   },
 
   // Post dispatch transactions
   MsgCreateIgp: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateIgp',
-    aminoType: 'hyperlane/v1/MsgCreateIgp',
-    proto: MsgCreateIgp,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateIgp',
+      converter: MsgCreateIgp,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateIgp',
+      converter: null,
+    },
   },
   MsgSetIgpOwner: {
-    typeUrl: '/hyperlane.core.v1.MsgSetIgpOwner',
-    aminoType: 'hyperlane/v1/MsgSetIgpOwner',
-    proto: MsgSetIgpOwner,
+    proto: {
+      type: '/hyperlane.core.v1.MsgSetIgpOwner',
+      converter: MsgSetIgpOwner,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgSetIgpOwner',
+      converter: null,
+    },
   },
   MsgSetDestinationGasConfig: {
-    typeUrl: '/hyperlane.core.v1.MsgSetDestinationGasConfig',
-    aminoType: 'hyperlane/v1/MsgSetDestinationGasConfig',
-    proto: MsgSetDestinationGasConfig,
+    proto: {
+      type: '/hyperlane.core.v1.MsgSetDestinationGasConfig',
+      converter: MsgSetDestinationGasConfig,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgSetDestinationGasConfig',
+      converter: null,
+    },
   },
   MsgPayForGas: {
-    typeUrl: '/hyperlane.core.v1.MsgPayForGas',
-    aminoType: 'hyperlane/v1/MsgPayForGas',
-    proto: MsgPayForGas,
+    proto: {
+      type: '/hyperlane.core.v1.MsgPayForGas',
+      converter: MsgPayForGas,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgPayForGas',
+      converter: null,
+    },
   },
   MsgClaim: {
-    typeUrl: '/hyperlane.core.v1.MsgClaim',
-    aminoType: 'hyperlane/v1/MsgClaim',
-    proto: MsgClaim,
+    proto: {
+      type: '/hyperlane.core.v1.MsgClaim',
+      converter: MsgClaim,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgClaim',
+      converter: null,
+    },
   },
   MsgCreateMerkleTreeHook: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateMerkleTreeHook',
-    aminoType: 'hyperlane/v1/MsgCreateMerkleTreeHook',
-    proto: MsgCreateMerkleTreeHook,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateMerkleTreeHook',
+      converter: MsgCreateMerkleTreeHook,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateMerkleTreeHook',
+      converter: null,
+    },
   },
   MsgCreateNoopHook: {
-    typeUrl: '/hyperlane.core.v1.MsgCreateNoopHook',
-    aminoType: 'hyperlane/v1/MsgCreateNoopHook',
-    proto: MsgCreateNoopHook,
+    proto: {
+      type: '/hyperlane.core.v1.MsgCreateNoopHook',
+      converter: MsgCreateNoopHook,
+    },
+    amino: {
+      type: 'hyperlane/v1/MsgCreateNoopHook',
+      converter: null,
+    },
   },
 
   // Warp transactions
   MsgCreateCollateralToken: {
-    typeUrl: '/hyperlane.warp.v1.MsgCreateCollateralToken',
-    aminoType: 'hyperlane/warp/v1/MsgCreateCollateralToken',
-    proto: MsgCreateCollateralToken,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgCreateCollateralToken',
+      converter: MsgCreateCollateralToken,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgCreateCollateralToken',
+      converter: null,
+    },
   },
   MsgCreateSyntheticToken: {
-    typeUrl: '/hyperlane.warp.v1.MsgCreateSyntheticToken',
-    aminoType: 'hyperlane/warp/v1/MsgCreateSyntheticToken',
-    proto: MsgCreateSyntheticToken,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgCreateSyntheticToken',
+      converter: MsgCreateSyntheticToken,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgCreateSyntheticToken',
+      converter: null,
+    },
   },
   MsgSetToken: {
-    typeUrl: '/hyperlane.warp.v1.MsgSetToken',
-    aminoType: 'hyperlane/warp/v1/MsgSetToken',
-    proto: MsgSetToken,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgSetToken',
+      converter: MsgSetToken,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgSetToken',
+      converter: null,
+    },
   },
   MsgEnrollRemoteRouter: {
-    typeUrl: '/hyperlane.warp.v1.MsgEnrollRemoteRouter',
-    aminoType: 'hyperlane/warp/v1/MsgEnrollRemoteRouter',
-    proto: MsgEnrollRemoteRouter,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgEnrollRemoteRouter',
+      converter: MsgEnrollRemoteRouter,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgEnrollRemoteRouter',
+      converter: null,
+    },
   },
   MsgUnrollRemoteRouter: {
-    typeUrl: '/hyperlane.warp.v1.MsgUnrollRemoteRouter',
-    aminoType: 'hyperlane/warp/v1/MsgUnrollRemoteRouter',
-    proto: MsgUnrollRemoteRouter,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgUnrollRemoteRouter',
+      converter: MsgUnrollRemoteRouter,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgUnrollRemoteRouter',
+      converter: null,
+    },
   },
   MsgRemoteTransfer: {
-    typeUrl: '/hyperlane.warp.v1.MsgRemoteTransfer',
-    aminoType: 'hyperlane/warp/v1/MsgRemoteTransfer',
-    proto: MsgRemoteTransfer,
+    proto: {
+      type: '/hyperlane.warp.v1.MsgRemoteTransfer',
+      converter: MsgRemoteTransfer,
+    },
+    amino: {
+      type: 'hyperlane/warp/v1/MsgRemoteTransfer',
+      converter: null,
+    },
   },
 };

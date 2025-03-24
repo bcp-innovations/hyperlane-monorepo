@@ -121,8 +121,8 @@ export class HyperlaneModuleClient extends StargateClient {
     this.registry = new Registry([...defaultRegistryTypes]);
 
     // register all the custom tx types
-    Object.values(REGISTRY).forEach(({ typeUrl, proto }) => {
-      this.registry.register(typeUrl, proto);
+    Object.values(REGISTRY).forEach(({ proto }) => {
+      this.registry.register(proto.type, proto.converter);
     });
   }
 
@@ -166,12 +166,13 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
   ) {
     // register all the custom amino tx types
     const aminoTypes = Object.values(REGISTRY).reduce(
-      (amino, { typeUrl, aminoType, proto }) => ({
-        ...amino,
-        [typeUrl]: {
-          aminoType: aminoType,
-          toAmino: proto.toJSON,
-          fromAmino: proto.fromJSON,
+      (types, { proto, amino }) => ({
+        ...types,
+        [proto.type]: {
+          aminoType: amino.type,
+          toAmino: (amino.converter as any)?.toJSON ?? proto.converter.toJSON,
+          fromAmino:
+            (amino.converter as any)?.fromJSON ?? proto.converter.fromJSON,
         },
       }),
       {},
@@ -195,8 +196,8 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
     );
 
     // register all the custom tx types
-    Object.values(REGISTRY).forEach(({ typeUrl, proto }) => {
-      this.registry.register(typeUrl, proto);
+    Object.values(REGISTRY).forEach(({ proto }) => {
+      this.registry.register(proto.type, proto.converter);
     });
 
     this.account = account;
