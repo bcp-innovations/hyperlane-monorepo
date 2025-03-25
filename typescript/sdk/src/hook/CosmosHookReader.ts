@@ -27,29 +27,26 @@ export class CosmosHookReader {
 
   async deriveHookConfig(address: Address): Promise<HookConfig> {
     try {
-      const { igp } = await this.cosmosProviderOrSigner.query.postDispatch.Igp({
-        id: address,
-      });
+      const { igps } =
+        await this.cosmosProviderOrSigner.query.postDispatch.Igps({});
 
-      if (igp) {
+      if (igps.some((igp) => igp.id === address)) {
         return this.deriveIgpConfig(address);
       }
 
-      const { merkle_tree_hook } =
-        await this.cosmosProviderOrSigner.query.postDispatch.MerkleTreeHook({
-          id: address,
-        });
+      const { merkle_tree_hooks } =
+        await this.cosmosProviderOrSigner.query.postDispatch.MerkleTreeHooks(
+          {},
+        );
 
-      if (merkle_tree_hook) {
+      if (merkle_tree_hooks.some((merkleTree) => merkleTree.id === address)) {
         return this.deriveMerkleTreeConfig(address);
       }
 
-      const { noop_hook } =
-        await this.cosmosProviderOrSigner.query.postDispatch.NoopHook({
-          id: address,
-        });
+      const { noop_hooks } =
+        await this.cosmosProviderOrSigner.query.postDispatch.NoopHooks({});
 
-      if (noop_hook) {
+      if (noop_hooks.some((noopHook) => noopHook.id === address)) {
         // TODO: should noop hook be supported?
         throw new Error(`Unsupported hook type: NoopHook`);
       }
