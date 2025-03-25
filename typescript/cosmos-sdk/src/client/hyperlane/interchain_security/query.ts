@@ -7,7 +7,9 @@ import {
   QueryAnnouncedStorageLocationsResponse,
   QueryClientImpl,
   QueryIsmRequest,
+  QueryIsmResponse,
   QueryIsmsRequest,
+  QueryIsmsResponse,
   QueryLatestAnnouncedStorageLocationRequest,
   QueryLatestAnnouncedStorageLocationResponse,
 } from '../../../types/hyperlane/core/interchain_security/v1/query.js';
@@ -19,11 +21,11 @@ import {
 
 type ISM = NoopISM | MerkleRootMultisigISM | MessageIdMultisigISM;
 
-type QueryIsmResponse = {
+type QueryDecodedIsmResponse = {
   ism: ISM;
 };
 
-type QueryIsmsResponse = {
+type QueryDecodedIsmsResponse = {
   isms: ISM[];
   pagination: PageResponse | undefined;
 };
@@ -55,6 +57,14 @@ export interface InterchainSecurityExtension {
     readonly Isms: (req: QueryIsmsRequest) => Promise<QueryIsmsResponse>;
     /** Ism ... */
     readonly Ism: (req: QueryIsmRequest) => Promise<QueryIsmResponse>;
+    /** DecodedIsms ... */
+    readonly DecodedIsms: (
+      req: QueryIsmsRequest,
+    ) => Promise<QueryDecodedIsmsResponse>;
+    /** DecodedIsm ... */
+    readonly DecodedIsm: (
+      req: QueryIsmRequest,
+    ) => Promise<QueryDecodedIsmResponse>;
   };
 }
 
@@ -73,14 +83,16 @@ export function setupInterchainSecurityExtension(
       LatestAnnouncedStorageLocation: (
         req: QueryLatestAnnouncedStorageLocationRequest,
       ) => queryService.LatestAnnouncedStorageLocation(req),
-      Isms: async (req: QueryIsmsRequest) => {
+      Isms: async (req: QueryIsmsRequest) => queryService.Isms(req),
+      Ism: async (req: QueryIsmRequest) => queryService.Ism(req),
+      DecodedIsms: async (req: QueryIsmsRequest) => {
         const { isms, pagination } = await queryService.Isms(req);
         return {
           isms: isms.map((ism) => decodeIsm(ism)),
           pagination,
         };
       },
-      Ism: async (req: QueryIsmRequest) => {
+      DecodedIsm: async (req: QueryIsmRequest) => {
         const { ism } = await queryService.Ism(req);
         return { ism: decodeIsm(ism) };
       },
