@@ -5,6 +5,7 @@ import type { IRegistry } from '@hyperlane-xyz/registry';
 import type {
   ChainMap,
   ChainMetadata,
+  MultiProtocolProvider,
   MultiProvider,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -23,6 +24,7 @@ export interface CommandContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProvider;
+  multiProtocolProvider: MultiProtocolProvider;
   skipConfirmation: boolean;
   key?: string;
   // just for evm chains backward compatibility

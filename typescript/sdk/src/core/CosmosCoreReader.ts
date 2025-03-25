@@ -1,4 +1,7 @@
-import { SigningHyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
+import {
+  HyperlaneModuleClient,
+  SigningHyperlaneModuleClient,
+} from '@hyperlane-xyz/cosmos-sdk';
 import { Address, rootLogger } from '@hyperlane-xyz/utils';
 
 import { CosmosHookReader } from '../hook/CosmosHookReader.js';
@@ -16,7 +19,9 @@ export class CosmosCoreReader {
 
   constructor(
     protected readonly multiProvider: MultiProvider,
-    protected readonly signer: SigningHyperlaneModuleClient,
+    protected readonly signer:
+      | HyperlaneModuleClient
+      | SigningHyperlaneModuleClient,
   ) {
     this.ismReader = new CosmosIsmReader(this.signer);
     this.hookReader = new CosmosHookReader(this.multiProvider, this.signer);

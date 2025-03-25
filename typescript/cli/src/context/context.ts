@@ -123,12 +123,14 @@ export async function getContext({
   }
 
   const multiProvider = await getMultiProvider(registry);
+  const multiProtocolProvider = await getMultiProtocolProvider(registry);
 
   return {
     registry,
     requiresKey,
     chainMetadata: multiProvider.metadata,
     multiProvider,
+    multiProtocolProvider,
     key,
     skipConfirmation: !!skipConfirmation,
     signerAddress,
@@ -169,6 +171,7 @@ export async function getDryRunContext(
   await verifyAnvil();
 
   let multiProvider = await getMultiProvider(registry);
+  let multiProtocolProvider = await getMultiProtocolProvider(registry);
   multiProvider = await forkNetworkToMultiProvider(multiProvider, chain);
   const { impersonatedKey, impersonatedSigner } = await getImpersonatedSigner({
     fromAddress,
@@ -183,6 +186,7 @@ export async function getDryRunContext(
     key: impersonatedKey,
     signer: impersonatedSigner,
     multiProvider: multiProvider,
+    multiProtocolProvider: multiProtocolProvider,
     skipConfirmation: !!skipConfirmation,
     isDryRun: true,
     dryRunChain: chain,
@@ -199,6 +203,11 @@ async function getMultiProvider(registry: IRegistry, signer?: ethers.Signer) {
   const multiProvider = new MultiProvider(chainMetadata);
   if (signer) multiProvider.setSharedSigner(signer);
   return multiProvider;
+}
+
+async function getMultiProtocolProvider(registry: IRegistry) {
+  const chainMetadata = await registry.getMetadata();
+  return new MultiProtocolProvider(chainMetadata);
 }
 
 /**
