@@ -433,6 +433,7 @@ export {
 } from './providers/transactions/transformer/ethersV5/types.js';
 
 export { EvmCoreModule } from './core/EvmCoreModule.js';
+export { CosmosCoreModule } from './core/CosmosCoreModule.js';
 export {
   isProxy,
   proxyAdmin,

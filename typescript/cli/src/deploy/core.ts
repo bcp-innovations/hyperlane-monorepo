@@ -7,10 +7,10 @@ import {
   ChainName,
   ContractVerifier,
   CoreConfig,
+  CosmosCoreModule,
   DeployedCoreAddresses,
   EvmCoreModule,
   ExplorerLicenseType,
-  IsmType,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType, assert } from '@hyperlane-xyz/utils';
 
@@ -118,10 +118,9 @@ export async function runCoreDeploy(params: DeployParams) {
 
     case ProtocolType.Cosmos:
       {
-        const domainId = multiProvider.getDomainId(chain);
         const signer = multiProtocolSigner!.getCosmosSigner(chain);
         assert(signer, 'Cosmos signer failed!');
-        const cosmosCoreModule = new CosmosCoreModule(account, domainId);
+        const cosmosCoreModule = new CosmosCoreModule(multiProvider, signer);
         deployedAddresses = await cosmosCoreModule.deploy({
           chain,
           config,
@@ -145,6 +144,7 @@ export async function runCoreDeploy(params: DeployParams) {
 }
 
 export async function runCoreApply(params: ApplyParams) {
+  // TODO: implement core update for cosmos
   const { context, chain, deployedCoreAddresses, config } = params;
   const { multiProvider } = context;
   const evmCoreModule = new EvmCoreModule(multiProvider, {

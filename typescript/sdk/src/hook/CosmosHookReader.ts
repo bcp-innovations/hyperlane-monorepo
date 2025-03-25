@@ -4,6 +4,8 @@ import {
 } from '@hyperlane-xyz/cosmos-sdk';
 import { Address, WithAddress, rootLogger } from '@hyperlane-xyz/utils';
 
+import { MultiProvider } from '../providers/MultiProvider.js';
+
 import {
   HookConfig,
   HookType,
@@ -17,6 +19,7 @@ export class CosmosHookReader {
   });
 
   constructor(
+    protected readonly multiProvider: MultiProvider,
     protected readonly cosmosProviderOrSigner:
       | HyperlaneModuleClient
       | SigningHyperlaneModuleClient,
@@ -69,14 +72,35 @@ export class CosmosHookReader {
       throw new Error(`IGP not found for address ${address}`);
     }
 
-    // TODO: return remaining properties
+    const { destination_gas_configs } =
+      await this.cosmosProviderOrSigner.query.postDispatch.DestinationGasConfigs(
+        {
+          id: igp.id,
+        },
+      );
+
+    const overhead: IgpHookConfig['overhead'] = {};
+    const oracleConfig: IgpHookConfig['oracleConfig'] = {};
+
+    destination_gas_configs.forEach((gasConfig) => {
+      const { name, nativeToken } = this.multiProvider.getChainMetadata(
+        gasConfig.remote_domain,
+      );
+      overhead[name] = parseInt(gasConfig.gas_overhead);
+      oracleConfig[name] = {
+        gasPrice: gasConfig.gas_oracle?.gas_price ?? '',
+        tokenExchangeRate: gasConfig.gas_oracle?.token_exchange_rate ?? '',
+        tokenDecimals: nativeToken?.decimals,
+      };
+    });
+
     return {
       type: HookType.INTERCHAIN_GAS_PAYMASTER,
       owner: igp.owner,
-      beneficiary: '',
-      oracleKey: '',
-      overhead: {},
-      oracleConfig: {},
+      beneficiary: igp.owner,
+      oracleKey: igp.owner,
+      overhead,
+      oracleConfig,
       address: igp.id,
     };
   }
@@ -93,7 +117,6 @@ export class CosmosHookReader {
       throw new Error(`Merkle Tree Hook not found for address ${address}`);
     }
 
-    // TODO: assertHookType
     return {
       type: HookType.MERKLE_TREE,
       address: merkle_tree_hook.id,
