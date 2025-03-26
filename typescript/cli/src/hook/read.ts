@@ -1,4 +1,4 @@
-import { ChainName, EvmHookReader } from '@hyperlane-xyz/sdk';
+import { ChainName, CosmosHookReader, EvmHookReader } from '@hyperlane-xyz/sdk';
 import { Address, ProtocolType, stringifyObject } from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
@@ -19,19 +19,42 @@ export async function readHookConfig({
   address: Address;
   out?: string;
 }): Promise<void> {
-  if (context.multiProvider.getProtocol(chain) === ProtocolType.Ethereum) {
-    const hookReader = new EvmHookReader(context.multiProvider, chain);
-    const config = await hookReader.deriveHookConfig(address);
-    const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
-    if (!out) {
-      logBlue(`Hook Config at ${address} on ${chain}:`);
-      log(stringConfig);
-    } else {
-      writeFileAtPath(out, stringConfig + '\n');
-      logBlue(`Hook Config written to ${out}.`);
-    }
-    return;
-  }
+  const protocolType = context.multiProvider.getProtocol(chain);
 
-  logRed('Unsupported chain. Currently this command supports EVM chains only.');
+  switch (protocolType) {
+    case ProtocolType.Ethereum: {
+      const hookReader = new EvmHookReader(context.multiProvider, chain);
+      const config = await hookReader.deriveHookConfig(address);
+      const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
+      if (!out) {
+        logBlue(`Hook Config at ${address} on ${chain}:`);
+        log(stringConfig);
+      } else {
+        writeFileAtPath(out, stringConfig + '\n');
+        logBlue(`Hook Config written to ${out}.`);
+      }
+      return;
+    }
+    case ProtocolType.Cosmos: {
+      const cosmosProvider =
+        await context.multiProtocolProvider.getCosmJsProvider(chain);
+      const hookReader = new CosmosHookReader(
+        context.multiProvider,
+        cosmosProvider,
+      );
+      const config = await hookReader.deriveHookConfig(address);
+      const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
+      if (!out) {
+        logBlue(`Hook Config at ${address} on ${chain}:`);
+        log(stringConfig);
+      } else {
+        writeFileAtPath(out, stringConfig + '\n');
+        logBlue(`Hook Config written to ${out}.`);
+      }
+      return;
+    }
+    default: {
+      logRed(`Chain with protocol type ${protocolType} is not supported`);
+    }
+  }
 }
