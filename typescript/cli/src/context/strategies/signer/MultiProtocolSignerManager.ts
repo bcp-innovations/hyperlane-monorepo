@@ -75,28 +75,6 @@ export class MultiProtocolSignerManager {
   }
 
   /**
-   * @notice Sets up chain-specific signer strategies
-   */
-  public initStrategy(chain: ChainName): void {
-    const protocolType = this.multiProvider.getProtocol(chain);
-    if (
-      protocolType !== ProtocolType.Ethereum &&
-      protocolType !== ProtocolType.Cosmos
-    ) {
-      this.logger.debug(
-        `Skipping signer strategy initialization for non-EVM and Cosmos chain ${chain}`,
-      );
-      return;
-    }
-    const strategy = MultiProtocolSignerFactory.getSignerStrategy(
-      chain,
-      this.submissionStrategy,
-      this.multiProvider,
-    );
-    this.signerStrategies.set(chain, strategy);
-  }
-
-  /**
    * @dev Configures signers for EVM chains in MultiProvider
    */
   async getMultiProvider(): Promise<MultiProvider> {
@@ -120,9 +98,7 @@ export class MultiProtocolSignerManager {
   async initSigner(chain: ChainName): Promise<TypedSigner> {
     const config = await this.resolveConfig(chain);
     const signerStrategy = this.getSignerStrategyOrFail(chain);
-    const signer = await signerStrategy.getSigner(config);
-    this.signers.set(chain, signer);
-    return signer;
+    return signerStrategy.getSigner(config);
   }
 
   /**
@@ -142,13 +118,12 @@ export class MultiProtocolSignerManager {
             chain,
           );
 
-          this.signers.set(
-            chain,
-            await signerStrategy.getSigner({
-              privateKey,
-              extraParams: { ...extraParams, provider, prefix: bech32Prefix },
-            }),
-          );
+          const signer = await signerStrategy.getSigner({
+            privateKey,
+            extraParams: { ...extraParams, provider, prefix: bech32Prefix },
+          });
+
+          this.signers.set(chain, signer);
         } else {
           // evm chains
           this.signers.set(
@@ -181,7 +156,7 @@ export class MultiProtocolSignerManager {
 
     // For Cosmos, we must use strategy config
     if (protocol === ProtocolType.Cosmos) {
-      return this.resolveCosmosConfig(chain);
+      return this.resolveCosmosConfig(chain, this.options.key);
     }
 
     // For other protocols, try CLI/ENV keys first, then fallback to strategy
@@ -220,26 +195,29 @@ export class MultiProtocolSignerManager {
 
   private async resolveCosmosConfig(
     chain: ChainName,
+    key?: string,
   ): Promise<{ chain: ChainName } & SignerConfig> {
     const signerStrategy = this.getSignerStrategyOrFail(chain);
-    const strategyConfig = await signerStrategy.getSignerConfig(chain);
+
+    if (!key) {
+      const strategyConfig = await signerStrategy.getSignerConfig(chain);
+      key = strategyConfig.privateKey;
+    }
+
     const provider = await this.multiProtocolProvider.getCosmJsProvider(chain);
     // TODO: include gasPrice in type
     const { bech32Prefix, gasPrice } = this.multiProvider.getChainMetadata(
       chain,
     ) as any;
 
-    assert(
-      strategyConfig.privateKey,
-      `No private key found for chain ${chain}`,
-    );
+    assert(key, `No private key found for chain ${chain}`);
     assert(provider, 'No Cosmos Provider found');
 
     this.logger.info(`Using strategy config for Cosmos chain ${chain}`);
 
     return {
       chain,
-      privateKey: strategyConfig.privateKey,
+      privateKey: key,
       extraParams: { provider, prefix: bech32Prefix, gasPrice },
     };
   }

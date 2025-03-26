@@ -1,7 +1,6 @@
 import { stringify as yamlStringify } from 'yaml';
 
 import { buildArtifact as coreBuildArtifact } from '@hyperlane-xyz/core/buildArtifact.js';
-import { SigningHyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
 import { ChainAddresses } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
@@ -45,7 +44,7 @@ interface ApplyParams extends DeployParams {
  * Executes the core deploy command.
  */
 export async function runCoreDeploy(params: DeployParams) {
-  const { context, config, multiProtocolSigner } = params;
+  const { context, config } = params;
   let chain = params.chain;
   const {
     isDryRun,
@@ -54,7 +53,8 @@ export async function runCoreDeploy(params: DeployParams) {
     registry,
     skipConfirmation,
     multiProvider,
-  } = context;
+    multiProtocolSigner,
+  } = context as any;
 
   // Select a dry-run chain if it's not supplied
   if (dryRunChain) {
@@ -119,10 +119,7 @@ export async function runCoreDeploy(params: DeployParams) {
 
     case ProtocolType.Cosmos:
       {
-        multiProtocolSigner?.initStrategy(chain);
-        const signer = (await multiProtocolSigner?.initSigner(
-          chain,
-        )) as SigningHyperlaneModuleClient;
+        const signer = multiProtocolSigner?.getCosmosSigner(chain)!;
         assert(signer, 'Cosmos signer failed!');
         const cosmosCoreModule = new CosmosCoreModule(multiProvider, signer);
         deployedAddresses = await cosmosCoreModule.deploy({
