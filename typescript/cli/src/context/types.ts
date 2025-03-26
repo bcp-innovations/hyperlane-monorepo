@@ -10,6 +10,8 @@ import type {
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
 
+import { MultiProtocolSignerManager } from './strategies/signer/MultiProtocolSignerManager.js';
+
 export interface ContextSettings {
   registryUris: string[];
   key?: string;
@@ -24,13 +26,14 @@ export interface CommandContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProvider;
-  multiProtocolProvider: MultiProtocolProvider;
   skipConfirmation: boolean;
   key?: string;
   // just for evm chains backward compatibility
   signerAddress?: string;
   warpCoreConfig?: WarpCoreConfig;
   strategyPath?: string;
+  multiProtocolProvider?: MultiProtocolProvider;
+  multiProtocolSigner?: MultiProtocolSignerManager;
 }
 
 export interface WriteCommandContext extends CommandContext {
@@ -38,6 +41,7 @@ export interface WriteCommandContext extends CommandContext {
   signer: ethers.Signer;
   isDryRun?: boolean;
   dryRunChain?: string;
+  multiProtocolSigner?: MultiProtocolSignerManager;
 }
 
 export type CommandModuleWithContext<Args> = CommandModule<

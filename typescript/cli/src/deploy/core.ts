@@ -54,7 +54,7 @@ export async function runCoreDeploy(params: DeployParams) {
     skipConfirmation,
     multiProvider,
     multiProtocolSigner,
-  } = context as any;
+  } = context;
 
   // Select a dry-run chain if it's not supplied
   if (dryRunChain) {
