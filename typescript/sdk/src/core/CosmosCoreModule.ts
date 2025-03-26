@@ -71,7 +71,7 @@ export class CosmosCoreModule {
       default_ism: defaultIsm,
       default_hook: defaultHook,
       required_hook: requiredHook,
-      new_owner: config.owner,
+      new_owner: config.owner || '',
     });
 
     // TODO: return ISM and hook addresses

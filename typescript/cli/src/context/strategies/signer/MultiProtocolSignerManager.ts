@@ -55,9 +55,13 @@ export class MultiProtocolSignerManager {
    */
   protected initializeStrategies(): void {
     for (const chain of this.chains) {
-      if (this.multiProvider.getProtocol(chain) !== ProtocolType.Ethereum) {
+      const protocolType = this.multiProvider.getProtocol(chain);
+      if (
+        protocolType !== ProtocolType.Ethereum &&
+        protocolType !== ProtocolType.Cosmos
+      ) {
         this.logger.debug(
-          `Skipping signer strategy initialization for non-EVM chain ${chain}`,
+          `Skipping signer strategy initialization for non-EVM and Cosmos chain ${chain}`,
         );
         continue;
       }
@@ -68,6 +72,28 @@ export class MultiProtocolSignerManager {
       );
       this.signerStrategies.set(chain, strategy);
     }
+  }
+
+  /**
+   * @notice Sets up chain-specific signer strategies
+   */
+  public initStrategy(chain: ChainName): void {
+    const protocolType = this.multiProvider.getProtocol(chain);
+    if (
+      protocolType !== ProtocolType.Ethereum &&
+      protocolType !== ProtocolType.Cosmos
+    ) {
+      this.logger.debug(
+        `Skipping signer strategy initialization for non-EVM and Cosmos chain ${chain}`,
+      );
+      return;
+    }
+    const strategy = MultiProtocolSignerFactory.getSignerStrategy(
+      chain,
+      this.submissionStrategy,
+      this.multiProvider,
+    );
+    this.signerStrategies.set(chain, strategy);
   }
 
   /**
@@ -94,7 +120,9 @@ export class MultiProtocolSignerManager {
   async initSigner(chain: ChainName): Promise<TypedSigner> {
     const config = await this.resolveConfig(chain);
     const signerStrategy = this.getSignerStrategyOrFail(chain);
-    return signerStrategy.getSigner(config);
+    const signer = await signerStrategy.getSigner(config);
+    this.signers.set(chain, signer);
+    return signer;
   }
 
   /**
@@ -106,7 +134,8 @@ export class MultiProtocolSignerManager {
     for (const { chain, privateKey, extraParams } of signerConfigs) {
       const signerStrategy = this.signerStrategies.get(chain);
       if (signerStrategy) {
-        const { protocol } = this.multiProvider.getChainMetadata(chain);
+        const { protocol, bech32Prefix } =
+          this.multiProvider.getChainMetadata(chain);
 
         if (protocol === ProtocolType.Cosmos) {
           const provider = await this.multiProtocolProvider?.getCosmJsProvider(
@@ -117,7 +146,7 @@ export class MultiProtocolSignerManager {
             chain,
             await signerStrategy.getSigner({
               privateKey,
-              extraParams: { ...extraParams, provider },
+              extraParams: { ...extraParams, provider, prefix: bech32Prefix },
             }),
           );
         } else {
@@ -194,7 +223,11 @@ export class MultiProtocolSignerManager {
   ): Promise<{ chain: ChainName } & SignerConfig> {
     const signerStrategy = this.getSignerStrategyOrFail(chain);
     const strategyConfig = await signerStrategy.getSignerConfig(chain);
-    const provider = this.multiProtocolProvider.getCosmJsProvider(chain);
+    const provider = await this.multiProtocolProvider.getCosmJsProvider(chain);
+    // TODO: include gasPrice in type
+    const { bech32Prefix, gasPrice } = this.multiProvider.getChainMetadata(
+      chain,
+    ) as any;
 
     assert(
       strategyConfig.privateKey,
@@ -207,7 +240,7 @@ export class MultiProtocolSignerManager {
     return {
       chain,
       privateKey: strategyConfig.privateKey,
-      extraParams: { provider },
+      extraParams: { provider, prefix: bech32Prefix, gasPrice },
     };
   }
 
@@ -230,8 +263,8 @@ export class MultiProtocolSignerManager {
   }
 
   getCosmosSigner(chain: ChainName): SigningHyperlaneModuleClient {
-    const protocol = this.multiProvider.getChainMetadata(chain).protocol;
-    if (protocol !== ProtocolType.Cosmos) {
+    const protocolType = this.multiProvider.getProtocol(chain);
+    if (protocolType !== ProtocolType.Cosmos) {
       throw new Error(`Chain ${chain} is not a Cosmos chain`);
     }
     return this.getSpecificSigner<SigningHyperlaneModuleClient>(chain);

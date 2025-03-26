@@ -29,18 +29,6 @@ export class CosmosDeployer {
     const ismType = ismConfig.type;
     this.logger.info(`Deploying ${ismType} to ${chain}`);
 
-    // Log ownership model difference for ownable ISMs
-    if (
-      [IsmType.MERKLE_ROOT_MULTISIG, IsmType.MESSAGE_ID_MULTISIG].includes(
-        ismType,
-      )
-    ) {
-      this.logger.info(
-        `Deploying ${ismType} with deployer (${this.signer.account.address}) as initial owner. ` +
-          'Note: Unlike EVM, this ISM type is ownable on Cosmos and ownership can be transferred later.',
-      );
-    }
-
     switch (ismType) {
       case IsmType.MERKLE_ROOT_MULTISIG:
         const { response: merkleRootResponse } =
@@ -79,8 +67,10 @@ export class CosmosDeployer {
     switch (hookType) {
       case HookType.INTERCHAIN_GAS_PAYMASTER:
         // TODO: what about denom?
+        const { nativeToken } = this.multiProvider.getChainMetadata(chain);
+
         const { response: igp } = await this.signer.createIgp({
-          denom: '',
+          denom: nativeToken?.denom ?? '',
         });
 
         for (const [remote, config] of Object.entries(
@@ -105,6 +95,16 @@ export class CosmosDeployer {
           });
         }
 
+        if (
+          hookConfig.owner &&
+          this.signer.account.address !== hookConfig.owner
+        ) {
+          await this.signer.setIgpOwner({
+            igp_id: igp.id,
+            new_owner: hookConfig.owner,
+          });
+        }
+
         return igp.id;
       case HookType.MERKLE_TREE:
         const { response: merkleTree } = await this.signer.createMerkleTreeHook(
@@ -112,6 +112,7 @@ export class CosmosDeployer {
             mailbox_id: mailbox,
           },
         );
+
         return merkleTree.id;
       case HookType.MAILBOX_DEFAULT:
         // TODO: is mailbox default noop?
