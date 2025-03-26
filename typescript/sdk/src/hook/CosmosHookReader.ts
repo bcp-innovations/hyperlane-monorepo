@@ -27,31 +27,15 @@ export class CosmosHookReader {
 
   async deriveHookConfig(address: Address): Promise<HookConfig> {
     try {
-      const { igps } =
-        await this.cosmosProviderOrSigner.query.postDispatch.Igps({});
-
-      if (igps.some((igp) => igp.id === address)) {
+      if (await this.isIgpHook(address)) {
         return this.deriveIgpConfig(address);
-      }
-
-      const { merkle_tree_hooks } =
-        await this.cosmosProviderOrSigner.query.postDispatch.MerkleTreeHooks(
-          {},
-        );
-
-      if (merkle_tree_hooks.some((merkleTree) => merkleTree.id === address)) {
+      } else if (await this.isMerkleTreeHook(address)) {
         return this.deriveMerkleTreeConfig(address);
-      }
-
-      const { noop_hooks } =
-        await this.cosmosProviderOrSigner.query.postDispatch.NoopHooks({});
-
-      if (noop_hooks.some((noopHook) => noopHook.id === address)) {
-        // TODO: should noop hook be supported?
+      } else if (await this.isNoopHook(address)) {
         throw new Error(`Unsupported hook type: NoopHook`);
+      } else {
+        throw new Error(`Unsupported hook type for address: ${address}`);
       }
-
-      throw new Error(`Unsupported hook type for address: ${address}`);
     } catch (error) {
       this.logger.error(`Failed to derive Hook config for ${address}`, error);
       throw error;
@@ -118,5 +102,40 @@ export class CosmosHookReader {
       type: HookType.MERKLE_TREE,
       address: merkle_tree_hook.id,
     };
+  }
+
+  private async isIgpHook(address: Address): Promise<boolean> {
+    try {
+      const { igp } = await this.cosmosProviderOrSigner.query.postDispatch.Igp({
+        id: address,
+      });
+      return !!igp;
+    } catch {
+      return false;
+    }
+  }
+
+  private async isMerkleTreeHook(address: Address): Promise<boolean> {
+    try {
+      const { merkle_tree_hook } =
+        await this.cosmosProviderOrSigner.query.postDispatch.MerkleTreeHook({
+          id: address,
+        });
+      return !!merkle_tree_hook;
+    } catch {
+      return false;
+    }
+  }
+
+  private async isNoopHook(address: Address): Promise<boolean> {
+    try {
+      const { noop_hook } =
+        await this.cosmosProviderOrSigner.query.postDispatch.NoopHook({
+          id: address,
+        });
+      return !!noop_hook;
+    } catch {
+      return false;
+    }
   }
 }
