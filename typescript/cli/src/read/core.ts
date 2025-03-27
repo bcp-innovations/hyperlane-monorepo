@@ -48,7 +48,7 @@ export async function executeCoreRead({
     }
     case ProtocolType.Cosmos: {
       const cosmosProvider =
-        await context.multiProtocolProvider.getCosmJsProvider(chain);
+        await context.multiProtocolProvider!.getCosmJsProvider(chain);
       const cosmosCoreReader = new CosmosCoreReader(
         context.multiProvider,
         cosmosProvider,

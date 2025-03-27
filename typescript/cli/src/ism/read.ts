@@ -37,7 +37,7 @@ export async function readIsmConfig({
     }
     case ProtocolType.Cosmos: {
       const cosmosProvider =
-        await context.multiProtocolProvider.getCosmJsProvider(chain);
+        await context.multiProtocolProvider!.getCosmJsProvider(chain);
       const ismReader = new CosmosIsmReader(cosmosProvider);
       const config = await ismReader.deriveIsmConfig(address);
       const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);

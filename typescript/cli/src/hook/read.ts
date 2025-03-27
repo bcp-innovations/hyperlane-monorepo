@@ -37,7 +37,7 @@ export async function readHookConfig({
     }
     case ProtocolType.Cosmos: {
       const cosmosProvider =
-        await context.multiProtocolProvider.getCosmJsProvider(chain);
+        await context.multiProtocolProvider!.getCosmJsProvider(chain);
       const hookReader = new CosmosHookReader(
         context.multiProvider,
         cosmosProvider,

@@ -2,6 +2,8 @@ import { SigningHyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
 import { Address, rootLogger } from '@hyperlane-xyz/utils';
 
 import { CosmosDeployer } from '../deploy/CosmosDeployer.js';
+import { HookType } from '../hook/types.js';
+import { IsmType } from '../ism/types.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { ChainNameOrId } from '../types.js';
 
@@ -74,9 +76,34 @@ export class CosmosCoreModule {
       new_owner: config.owner || '',
     });
 
-    // TODO: return ISM and hook addresses
-    return {
+    const addresses: Record<string, string> = {
       mailbox: mailbox.id,
     };
+
+    if (typeof config.defaultIsm !== 'string') {
+      if (config.defaultIsm.type === IsmType.MERKLE_ROOT_MULTISIG) {
+        addresses.staticMerkleRootMultisigIsmFactory = defaultIsm;
+      } else if (config.defaultIsm.type === IsmType.MESSAGE_ID_MULTISIG) {
+        addresses.staticMessageIdMultisigIsmFactory = defaultIsm;
+      }
+    }
+
+    if (typeof config.defaultHook !== 'string') {
+      if (config.defaultHook.type === HookType.INTERCHAIN_GAS_PAYMASTER) {
+        addresses.interchainGasPaymaster = defaultHook;
+      } else if (config.defaultHook.type === HookType.MERKLE_TREE) {
+        addresses.merkleTreeHook = defaultHook;
+      }
+    }
+
+    if (typeof config.requiredHook !== 'string') {
+      if (config.requiredHook.type === HookType.INTERCHAIN_GAS_PAYMASTER) {
+        addresses.interchainGasPaymaster = requiredHook;
+      } else if (config.requiredHook.type === HookType.MERKLE_TREE) {
+        addresses.merkleTreeHook = requiredHook;
+      }
+    }
+
+    return addresses;
   }
 }
