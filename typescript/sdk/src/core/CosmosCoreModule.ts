@@ -5,10 +5,11 @@ import { CosmosDeployer } from '../deploy/CosmosDeployer.js';
 import { HookType } from '../hook/types.js';
 import { IsmType } from '../ism/types.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
+import { AnnotatedCosmJsTransaction } from '../providers/ProviderType.js';
 import { ChainNameOrId } from '../types.js';
 
 import { CosmosCoreReader } from './CosmosCoreReader.js';
-import { CoreConfig } from './types.js';
+import { CoreConfig, CoreConfigSchema } from './types.js';
 
 export class CosmosCoreModule {
   protected logger = rootLogger.child({ module: 'CosmosCoreModule' });
@@ -105,5 +106,17 @@ export class CosmosCoreModule {
     }
 
     return addresses;
+  }
+
+  public async update(
+    expectedConfig: CoreConfig,
+    mailboxAddress: Address,
+  ): Promise<AnnotatedCosmJsTransaction[]> {
+    CoreConfigSchema.parse(expectedConfig);
+    // const actualConfig = await this.read(mailboxAddress);
+
+    const transactions: AnnotatedCosmJsTransaction[] = [];
+
+    return transactions;
   }
 }

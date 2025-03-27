@@ -4301,13 +4301,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:^2.2.3":
-  version: 2.2.3
-  resolution: "@bufbuild/protobuf@npm:2.2.3"
-  checksum: 10/30bf3ac56338159dadaa87dce5372d19ff50dc32d06293bdf655e35ebc1766435b485714d3b73a3b7070ce29f58891a9e2b0f453a2d7deef583797b4a420273c
-  languageName: node
-  linkType: hard
-
 "@bytecodealliance/preview2-shim@npm:0.17.0":
   version: 0.17.0
   resolution: "@bytecodealliance/preview2-shim@npm:0.17.0"
@@ -7744,16 +7737,36 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/cosmos-sdk@npm:1.0.0, @hyperlane-xyz/cosmos-sdk@npm:^1.0.0, @hyperlane-xyz/cosmos-sdk@workspace:typescript/cosmos-sdk":
+"@hyperlane-xyz/cosmos-sdk@npm:1.0.0, @hyperlane-xyz/cosmos-sdk@workspace:typescript/cosmos-sdk":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/cosmos-sdk@workspace:typescript/cosmos-sdk"
   dependencies:
-    "@bufbuild/protobuf": "npm:^2.2.3"
     "@cosmjs/stargate": "npm:^0.32.4"
+    "@eslint/js": "npm:^9.15.0"
+    "@hyperlane-xyz/cosmos-types": "npm:^1.0.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.1.6"
+    "@typescript-eslint/parser": "npm:^8.1.6"
+    eslint: "npm:^9.15.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-import-resolver-typescript: "npm:^3.6.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    globals: "npm:^15.14.0"
+    prettier: "npm:^2.8.8"
+    rimraf: "npm:^6.0.1"
+    ts-node: "npm:^10.8.0"
+    tslib: "npm:^2.8.1"
+    typescript: "npm:5.3.3"
+    typescript-eslint: "npm:^8.23.0"
+  languageName: unknown
+  linkType: soft
+
+"@hyperlane-xyz/cosmos-types@npm:^1.0.0, @hyperlane-xyz/cosmos-types@workspace:typescript/cosmos-types":
+  version: 0.0.0-use.local
+  resolution: "@hyperlane-xyz/cosmos-types@workspace:typescript/cosmos-types"
+  dependencies:
     "@eslint/js": "npm:^9.15.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.1.6"
     "@typescript-eslint/parser": "npm:^8.1.6"
-    axios: "npm:^1.7.9"
     eslint: "npm:^9.15.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-import-resolver-typescript: "npm:^3.6.3"
@@ -7926,7 +7939,7 @@ __metadata:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@eslint/js": "npm:^9.15.0"
     "@hyperlane-xyz/core": "npm:6.0.0"
-    "@hyperlane-xyz/cosmos-sdk": "npm:^1.0.0"
+    "@hyperlane-xyz/cosmos-sdk": "npm:1.0.0"
     "@hyperlane-xyz/utils": "npm:9.0.0"
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@nomiclabs/hardhat-waffle": "npm:^2.0.6"
@@ -8013,7 +8026,7 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@eslint/js": "npm:^9.15.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/cosmos-sdk": "npm:^1.0.0"
+    "@hyperlane-xyz/cosmos-sdk": "npm:1.0.0"
     "@hyperlane-xyz/registry": "npm:10.12.0"
     "@hyperlane-xyz/sdk": "npm:9.0.0"
     "@hyperlane-xyz/utils": "npm:9.0.0"
@@ -19168,17 +19181,6 @@ __metadata:
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
   checksum: 10/b7a5f660ea53ba9c2a745bf5ad77ad8bf4f1338e13ccc3f9f09f810267d6c638c03dac88b55dae8dc98b79c57d2d6835be651d58d2af97c174f43d289a9fd007
-  languageName: node
-  linkType: hard
-
-"axios@npm:^1.7.9":
-  version: 1.8.3
-  resolution: "axios@npm:1.8.3"
-  dependencies:
-    follow-redirects: "npm:^1.15.6"
-    form-data: "npm:^4.0.0"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10/050f911cadd6d47a38ddbf91d2f8da2c34661dda8077e7ad6546e8178701125366fddbba07211a648b6815cf6c2c3c91c0a65d8b968e3d1a6054a21141ff9c01
   languageName: node
   linkType: hard
 
