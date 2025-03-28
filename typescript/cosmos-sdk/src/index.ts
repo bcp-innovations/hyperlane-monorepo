@@ -220,13 +220,13 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
     );
   }
 
-  private async submitTx<R>(
+  private async submitTx<T>(
     msg: EncodeObject,
     options?: {
       fee?: StdFee | 'auto' | number;
       memo?: string;
     },
-  ): Promise<TxResponse<R>> {
+  ): Promise<TxResponse<T>> {
     const result = await this.signAndBroadcast(
       this.account.address,
       [msg],

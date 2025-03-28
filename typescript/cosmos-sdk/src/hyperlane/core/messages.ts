@@ -18,12 +18,3 @@ export interface MsgProcessMessageEncodeObject extends EncodeObject {
   readonly typeUrl: typeof REGISTRY.MsgProcessMessage.proto.type;
   readonly value: Partial<coreTx.MsgProcessMessage>;
 }
-
-export const createMailboxMsg = (
-  value: coreTx.MsgCreateMailbox,
-): MsgCreateMailboxEncodeObject => {
-  return {
-    typeUrl: REGISTRY.MsgCreateMailbox.proto.type,
-    value: REGISTRY.MsgCreateMailbox.proto.converter.create(value),
-  };
-};
