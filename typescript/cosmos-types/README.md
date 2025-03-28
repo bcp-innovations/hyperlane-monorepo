@@ -22,7 +22,7 @@ First you need to install the dependencies by running `yarn install`.
 You can automatically generate the TypeScript types from the proto files of the Cosmos Hyperlane Module by executing the following commands. Note that this only needs to be done if the proto files change in the Cosmos Hyperlane Module project.
 
 ```bash
-cd proto
+cd typescript/cosmos-types
 docker compose up
 ```
 
