@@ -31,7 +31,3 @@ After this command has finished the newly generated types can be found under `sr
 ### Building the project
 
 You can build the project with `yarn build`, the build output can be found under `dist`.
-
-## License
-
-Apache 2.0

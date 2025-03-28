@@ -7771,13 +7771,9 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-import-resolver-typescript: "npm:^3.6.3"
     eslint-plugin-import: "npm:^2.31.0"
-    globals: "npm:^15.14.0"
     long: "npm:^5.2.4"
     prettier: "npm:^2.8.8"
     protobufjs: "npm:^7.4.0"
-    rimraf: "npm:^6.0.1"
-    ts-node: "npm:^10.8.0"
-    tslib: "npm:^2.8.1"
     typescript: "npm:5.3.3"
     typescript-eslint: "npm:^8.23.0"
   languageName: unknown
