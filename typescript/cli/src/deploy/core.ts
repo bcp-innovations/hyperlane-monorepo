@@ -121,11 +121,17 @@ export async function runCoreDeploy(params: DeployParams) {
       {
         const signer = multiProtocolSigner?.getCosmosSigner(chain)!;
         assert(signer, 'Cosmos signer failed!');
-        const cosmosCoreModule = new CosmosCoreModule(multiProvider, signer);
-        deployedAddresses = await cosmosCoreModule.deploy({
+
+        logBlue('🚀 All systems ready, captain! Beginning deployment...');
+
+        const cosmosCoreModule = await CosmosCoreModule.create({
           chain,
           config,
+          multiProvider,
+          signer,
         });
+
+        deployedAddresses = cosmosCoreModule.serialize();
       }
       break;
 
@@ -179,12 +185,13 @@ export async function runCoreApply(params: ApplyParams) {
     case ProtocolType.Cosmos: {
       const signer = multiProtocolSigner?.getCosmosSigner(chain)!;
       assert(signer, 'Cosmos signer failed!');
-      const cosmosCoreModule = new CosmosCoreModule(multiProvider, signer);
-
-      const transactions = await cosmosCoreModule.update(
+      const cosmosCoreModule = new CosmosCoreModule(multiProvider, signer, {
+        chain,
         config,
-        deployedCoreAddresses.mailbox,
-      );
+        addresses: deployedCoreAddresses,
+      });
+
+      const transactions = await cosmosCoreModule.update(config);
 
       if (transactions.length) {
         logGray('Updating deployed core contracts');

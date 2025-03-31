@@ -68,10 +68,10 @@ type ProtocolTypesMapping = {
     receipt: SolanaWeb3TransactionReceipt;
   };
   [ProtocolType.Cosmos]: {
-    transaction: CosmJsWasmTransaction;
-    provider: CosmJsWasmProvider;
-    contract: CosmJsWasmContract;
-    receipt: CosmJsWasmTransactionReceipt;
+    transaction: CosmJsTransaction;
+    provider: CosmJsProvider;
+    contract: CosmJsContract;
+    receipt: CosmJsTransactionReceipt;
   };
   [ProtocolType.Starknet]: {
     transaction: StarknetJsTransaction;

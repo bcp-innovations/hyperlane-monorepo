@@ -8,7 +8,7 @@ import { CosmosHookReader } from '../hook/CosmosHookReader.js';
 import { CosmosIsmReader } from '../ism/CosmosIsmReader.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 
-import { CoreConfig } from './types.js';
+import { DerivedCoreConfig } from './types.js';
 
 export class CosmosCoreReader {
   protected readonly logger = rootLogger.child({
@@ -27,7 +27,7 @@ export class CosmosCoreReader {
     this.hookReader = new CosmosHookReader(this.multiProvider, this.signer);
   }
 
-  async deriveCoreConfig(mailboxAddress: Address): Promise<CoreConfig> {
+  async deriveCoreConfig(mailboxAddress: Address): Promise<DerivedCoreConfig> {
     const { mailbox } = await this.signer.query.core.Mailbox({
       id: mailboxAddress,
     });
