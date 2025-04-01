@@ -2,35 +2,70 @@ import {
   REGISTRY,
   SigningHyperlaneModuleClient,
 } from '@hyperlane-xyz/cosmos-sdk';
-import { Address, assert, deepEquals, rootLogger } from '@hyperlane-xyz/utils';
+import {
+  Address,
+  Domain,
+  ProtocolType,
+  assert,
+  deepEquals,
+  rootLogger,
+} from '@hyperlane-xyz/utils';
 
+import {
+  HyperlaneModule,
+  HyperlaneModuleParams,
+} from '../core/AbstractHyperlaneModule.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { AnnotatedCosmJsTransaction } from '../providers/ProviderType.js';
-import { ChainName } from '../types.js';
+import { ChainName, ChainNameOrId } from '../types.js';
 import { normalizeConfig } from '../utils/ism.js';
 
 import { CosmosIsmReader } from './CosmosIsmReader.js';
 import { IsmConfig, IsmConfigSchema, IsmType } from './types.js';
 
-export class CosmosIsmModule {
+type IsmModuleAddresses = {
+  deployedIsm: Address;
+  mailbox: Address;
+};
+
+export class CosmosIsmModule extends HyperlaneModule<
+  ProtocolType.Cosmos,
+  IsmConfig,
+  IsmModuleAddresses
+> {
   protected readonly logger = rootLogger.child({ module: 'CosmosIsmModule' });
   protected readonly reader: CosmosIsmReader;
+  protected readonly mailbox: Address;
+
+  // Adding these to reduce how often we need to grab from MultiProvider.
+  public readonly chain: ChainName;
+  public readonly chainId: string;
+  public readonly domainId: Domain;
 
   constructor(
     protected readonly multiProvider: MultiProvider,
+    params: HyperlaneModuleParams<IsmConfig, IsmModuleAddresses>,
     protected readonly signer: SigningHyperlaneModuleClient,
-    protected readonly mailbox: Address,
   ) {
+    params.config = IsmConfigSchema.parse(params.config);
+    super(params);
+
+    this.mailbox = params.addresses.mailbox;
+    this.chain = multiProvider.getChainName(this.args.chain);
+    this.chainId = multiProvider.getChainId(this.chain).toString();
+    this.domainId = multiProvider.getDomainId(this.chain);
+
     this.reader = new CosmosIsmReader(signer);
   }
 
-  public async read(ismAddress: Address): Promise<IsmConfig> {
-    return this.reader.deriveIsmConfig(ismAddress);
+  public async read(): Promise<IsmConfig> {
+    return typeof this.args.config === 'string'
+      ? this.args.addresses.deployedIsm
+      : this.reader.deriveIsmConfig(this.args.addresses.deployedIsm);
   }
 
   // whoever calls update() needs to ensure that targetConfig has a valid owner
   public async update(
-    ismAddress: Address,
     expectedConfig: IsmConfig,
   ): Promise<AnnotatedCosmJsTransaction[]> {
     expectedConfig = IsmConfigSchema.parse(expectedConfig);
@@ -44,7 +79,7 @@ export class CosmosIsmModule {
 
     // save current config for comparison
     // normalize the config to ensure it's in a consistent format for comparison
-    const actualConfig = normalizeConfig(await this.read(ismAddress));
+    const actualConfig = normalizeConfig(await this.read());
     expectedConfig = normalizeConfig(expectedConfig);
 
     assert(
@@ -60,13 +95,12 @@ export class CosmosIsmModule {
     }
 
     const defaultIsm = await this.deploy({
-      chain: '',
-      ismConfig: expectedConfig,
+      config: expectedConfig,
     });
 
     return [
       {
-        annotation: `Updating default ISM of Mailbox from ${ismAddress} to ${defaultIsm}`,
+        annotation: `Updating default ISM of Mailbox from ${this.args.addresses.deployedIsm} to ${defaultIsm}`,
         typeUrl: REGISTRY.MsgSetMailbox.proto.type,
         value: REGISTRY.MsgSetMailbox.proto.converter.create({
           owner: actualConfig.owner,
@@ -77,31 +111,55 @@ export class CosmosIsmModule {
     ];
   }
 
-  protected async deploy(params: {
-    chain: ChainName;
-    ismConfig: IsmConfig;
-  }): Promise<Address> {
-    const { chain, ismConfig } = params;
-    if (typeof ismConfig === 'string') {
-      return ismConfig;
+  // manually write static create function
+  public static async create({
+    chain,
+    config,
+    addresses,
+    multiProvider,
+    signer,
+  }: {
+    chain: ChainNameOrId;
+    config: IsmConfig;
+    addresses: IsmModuleAddresses;
+    multiProvider: MultiProvider;
+    signer: SigningHyperlaneModuleClient;
+  }): Promise<CosmosIsmModule> {
+    const module = new CosmosIsmModule(
+      multiProvider,
+      {
+        addresses,
+        chain,
+        config,
+      },
+      signer,
+    );
+
+    module.args.addresses.deployedIsm = await module.deploy({ config });
+    return module;
+  }
+
+  protected async deploy({ config }: { config: IsmConfig }): Promise<Address> {
+    if (typeof config === 'string') {
+      return config;
     }
-    const ismType = ismConfig.type;
-    this.logger.info(`Deploying ${ismType} to ${chain}`);
+    const ismType = config.type;
+    this.logger.info(`Deploying ${ismType} to ${this.chain}`);
 
     switch (ismType) {
       case IsmType.MERKLE_ROOT_MULTISIG:
         const { response: merkleRootResponse } =
           await this.signer.createMerklerootMultisigIsm({
-            validators: ismConfig.validators,
-            threshold: ismConfig.threshold,
+            validators: config.validators,
+            threshold: config.threshold,
           });
         return merkleRootResponse.id;
 
       case IsmType.MESSAGE_ID_MULTISIG:
         const { response: messageIdResponse } =
           await this.signer.createMessageIdMultisigIsm({
-            validators: ismConfig.validators,
-            threshold: ismConfig.threshold,
+            validators: config.validators,
+            threshold: config.threshold,
           });
         return messageIdResponse.id;
       case IsmType.TEST_ISM:

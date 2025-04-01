@@ -11,6 +11,7 @@ import {
 
 import { CosmosDeployer } from '../deploy/CosmosDeployer.js';
 import { HookType } from '../hook/types.js';
+import { CosmosIsmModule } from '../ism/CosmosIsmModule.js';
 import { IsmType } from '../ism/types.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { AnnotatedCosmJsTransaction } from '../providers/ProviderType.js';
@@ -41,11 +42,12 @@ export class CosmosCoreModule extends HyperlaneModule<
     args: HyperlaneModuleParams<CoreConfig, Record<string, string>>,
   ) {
     super(args);
-    this.coreReader = new CosmosCoreReader(this.multiProvider, signer);
 
     this.chainName = multiProvider.getChainName(args.chain);
     this.chainId = multiProvider.getChainId(args.chain).toString();
     this.domainId = multiProvider.getDomainId(args.chain);
+
+    this.coreReader = new CosmosCoreReader(this.multiProvider, signer);
   }
 
   /**
@@ -102,10 +104,18 @@ export class CosmosCoreModule extends HyperlaneModule<
     const deployer = new CosmosDeployer(multiProvider, signer);
 
     // 1. Deploy default ISM
-    const defaultIsm = await deployer.deployIsm({
+    const ismModule = await CosmosIsmModule.create({
       chain: chainName,
-      ismConfig: config.defaultIsm,
+      config: config.defaultIsm,
+      addresses: {
+        deployedIsm: '',
+        mailbox: '',
+      },
+      multiProvider,
+      signer,
     });
+
+    const defaultIsm = ismModule.serialize().deployedIsm;
 
     // 2. Deploy Mailbox with initial configuration
     const { response: mailbox } = await signer.createMailbox({
