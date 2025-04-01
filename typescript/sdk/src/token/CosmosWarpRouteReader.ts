@@ -1,0 +1,192 @@
+import {
+  HyperlaneModuleClient,
+  SigningHyperlaneModuleClient,
+} from '@hyperlane-xyz/cosmos-sdk';
+import { warpTypes } from '@hyperlane-xyz/cosmos-types';
+import { Address, bytes32ToAddress, rootLogger } from '@hyperlane-xyz/utils';
+
+import { CosmosHookReader } from '../hook/CosmosHookReader.js';
+import { CosmosIsmReader } from '../ism/CosmosIsmReader.js';
+import { MultiProvider } from '../providers/MultiProvider.js';
+import {
+  DestinationGas,
+  MailboxClientConfig,
+  RemoteRouters,
+  RemoteRoutersSchema,
+} from '../router/types.js';
+import { ChainNameOrId, DeployedOwnableConfig } from '../types.js';
+import { HyperlaneReader } from '../utils/HyperlaneReader.js';
+
+import { TokenType } from './config.js';
+import { HypTokenConfig, HypTokenRouterConfig } from './types.js';
+
+export class CosmosWarpRouteReader extends HyperlaneReader {
+  protected readonly logger = rootLogger.child({
+    module: 'CosmosWarpRouteReader',
+  });
+  cosmosHookReader: CosmosHookReader;
+  cosmosIsmReader: CosmosIsmReader;
+
+  constructor(
+    protected readonly multiProvider: MultiProvider,
+    protected readonly chain: ChainNameOrId,
+    protected readonly cosmosProviderOrSigner:
+      | SigningHyperlaneModuleClient
+      | HyperlaneModuleClient,
+  ) {
+    super(multiProvider, chain);
+    this.cosmosHookReader = new CosmosHookReader(
+      multiProvider,
+      cosmosProviderOrSigner,
+    );
+    this.cosmosIsmReader = new CosmosIsmReader(cosmosProviderOrSigner);
+  }
+
+  /**
+   * Derives the configuration for a Hyperlane ERC20 router contract at the given address.
+   *
+   * @param warpRouteAddress - The address of the Hyperlane ERC20 router contract.
+   * @returns The configuration for the Hyperlane ERC20 router.
+   *
+   */
+  async deriveWarpRouteConfig(
+    warpRouteAddress: Address,
+  ): Promise<HypTokenRouterConfig> {
+    // Derive the config type
+    const type = await this.deriveTokenType(warpRouteAddress);
+    const baseMetadata = await this.fetchMailboxClientConfig(warpRouteAddress);
+    const tokenConfig = await this.fetchTokenConfig(type, warpRouteAddress);
+    const remoteRouters = await this.fetchRemoteRouters(warpRouteAddress);
+    const proxyAdmin = await this.fetchProxyAdminConfig(warpRouteAddress);
+    const destinationGas = await this.fetchDestinationGas(warpRouteAddress);
+
+    return {
+      ...baseMetadata,
+      ...tokenConfig,
+      remoteRouters,
+      proxyAdmin,
+      destinationGas,
+      type,
+    } as HypTokenRouterConfig;
+  }
+
+  /**
+   * Derives the token type for a given Warp Route address using specific methods
+   *
+   * @param warpRouteAddress - The Warp Route address to derive the token type for.
+   * @returns The derived token type, which can be one of: collateralVault, collateral, native, or synthetic.
+   */
+  async deriveTokenType(warpRouteAddress: Address): Promise<TokenType> {
+    const { token } = await this.cosmosProviderOrSigner.query.warp.Token({
+      id: warpRouteAddress,
+    });
+
+    if (!token) {
+      throw new Error(`Failed to find token for address ${warpRouteAddress}`);
+    }
+
+    switch (token.token_type) {
+      case warpTypes.HypTokenType.HYP_TOKEN_TYPE_COLLATERAL:
+        return TokenType.collateral;
+      case warpTypes.HypTokenType.HYP_TOKEN_TYPE_SYNTHETIC:
+        return TokenType.synthetic;
+      default:
+        throw new Error(
+          `Failed to determine token type for address ${warpRouteAddress}`,
+        );
+    }
+  }
+
+  /**
+   * Fetches the base metadata for a Warp Route contract.
+   *
+   * @param routerAddress - The address of the Warp Route contract.
+   * @returns The base metadata for the Warp Route contract, including the mailbox, owner, hook, and ism.
+   */
+  async fetchMailboxClientConfig(
+    routerAddress: Address,
+  ): Promise<MailboxClientConfig> {
+    const { token } = await this.cosmosProviderOrSigner.query.warp.Token({
+      id: routerAddress,
+    });
+
+    if (!token) {
+      throw new Error(`Failed to find token for address ${routerAddress}`);
+    }
+
+    const derivedIsm = await this.cosmosIsmReader.deriveIsmConfig(token.ism_id);
+    // TODO: where to get hook from?
+    const derivedHook = await this.cosmosHookReader.deriveHookConfig('hook');
+
+    return {
+      mailbox: token.origin_mailbox,
+      owner: token.owner,
+      hook: derivedHook,
+      interchainSecurityModule: derivedIsm,
+    };
+  }
+
+  /**
+   * Fetches the metadata for a token address.
+   *
+   * @param warpRouteAddress - The address of the token.
+   * @returns A partial ERC20 metadata object containing the token name, symbol, total supply, and decimals.
+   * Throws if unsupported token type
+   */
+  async fetchTokenConfig(
+    type: TokenType,
+    warpRouteAddress: Address,
+  ): Promise<HypTokenConfig> {
+    // TODO: implement
+    return {} as HypTokenConfig;
+  }
+
+  async fetchRemoteRouters(warpRouteAddress: Address): Promise<RemoteRouters> {
+    const { remote_routers } =
+      await this.cosmosProviderOrSigner.query.warp.RemoteRouters({
+        id: warpRouteAddress,
+      });
+
+    const routers = remote_routers.reduce(
+      (value, router) => ({
+        ...value,
+        [router.receiver_domain]: {
+          address: bytes32ToAddress(router.receiver_contract),
+        },
+      }),
+      {},
+    );
+
+    return RemoteRoutersSchema.parse(routers);
+  }
+
+  async fetchProxyAdminConfig(
+    tokenAddress: Address,
+  ): Promise<DeployedOwnableConfig> {
+    const { token } = await this.cosmosProviderOrSigner.query.warp.Token({
+      id: tokenAddress,
+    });
+
+    return {
+      address: tokenAddress,
+      owner: token?.owner ?? '',
+    };
+  }
+
+  async fetchDestinationGas(
+    warpRouteAddress: Address,
+  ): Promise<DestinationGas> {
+    const { remote_routers } =
+      await this.cosmosProviderOrSigner.query.warp.RemoteRouters({
+        id: warpRouteAddress,
+      });
+
+    return remote_routers.reduce(
+      (value, router) => ({
+        ...value,
+        [router.receiver_domain]: router.gas,
+      }),
+      {},
+    );
+  }
+}
