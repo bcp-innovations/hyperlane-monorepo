@@ -115,7 +115,7 @@ export class CosmosCoreModule extends HyperlaneModule<
       signer,
     });
 
-    const defaultIsm = ismModule.serialize().deployedIsm;
+    const { deployedIsm: defaultIsm } = ismModule.serialize();
 
     // 2. Deploy Mailbox with initial configuration
     const { response: mailbox } = await signer.createMailbox({
@@ -197,6 +197,12 @@ export class CosmosCoreModule extends HyperlaneModule<
       ...this.createMailboxOwnerUpdateTxs(actualConfig, expectedConfig),
     );
 
+    transactions.push(
+      ...(await this.createIsmUpdateTxs(actualConfig, expectedConfig)),
+    );
+
+    // TODO: what about hook updates?
+
     return transactions;
   }
 
@@ -219,5 +225,25 @@ export class CosmosCoreModule extends HyperlaneModule<
         }),
       },
     ];
+  }
+
+  private async createIsmUpdateTxs(
+    actualConfig: CoreConfig,
+    expectedConfig: CoreConfig,
+  ): Promise<AnnotatedCosmJsTransaction[]> {
+    const ismModule = new CosmosIsmModule(
+      this.multiProvider,
+      {
+        addresses: {
+          mailbox: this.args.addresses.mailbox,
+          deployedIsm: this.args.addresses.default_ism,
+        },
+        chain: this.chainName,
+        config: actualConfig.defaultIsm,
+      },
+      this.signer,
+    );
+
+    return ismModule.update(expectedConfig.defaultIsm);
   }
 }
