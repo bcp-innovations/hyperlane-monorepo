@@ -15,12 +15,11 @@ import {
   RemoteRoutersSchema,
 } from '../router/types.js';
 import { ChainNameOrId, DeployedOwnableConfig } from '../types.js';
-import { HyperlaneReader } from '../utils/HyperlaneReader.js';
 
 import { TokenType } from './config.js';
 import { HypTokenConfig, HypTokenRouterConfig } from './types.js';
 
-export class CosmosWarpRouteReader extends HyperlaneReader {
+export class CosmosWarpRouteReader {
   protected readonly logger = rootLogger.child({
     module: 'CosmosWarpRouteReader',
   });
@@ -34,7 +33,6 @@ export class CosmosWarpRouteReader extends HyperlaneReader {
       | SigningHyperlaneModuleClient
       | HyperlaneModuleClient,
   ) {
-    super(multiProvider, chain);
     this.cosmosHookReader = new CosmosHookReader(
       multiProvider,
       cosmosProviderOrSigner,
@@ -114,16 +112,19 @@ export class CosmosWarpRouteReader extends HyperlaneReader {
       throw new Error(`Failed to find token for address ${routerAddress}`);
     }
 
-    const derivedIsm = await this.cosmosIsmReader.deriveIsmConfig(token.ism_id);
-    // TODO: where to get hook from?
-    const derivedHook = await this.cosmosHookReader.deriveHookConfig('hook');
-
-    return {
+    const config: MailboxClientConfig = {
       mailbox: token.origin_mailbox,
       owner: token.owner,
-      hook: derivedHook,
-      interchainSecurityModule: derivedIsm,
     };
+
+    if (token.ism_id) {
+      const derivedIsm = await this.cosmosIsmReader.deriveIsmConfig(
+        token.ism_id,
+      );
+      config.interchainSecurityModule = derivedIsm;
+    }
+
+    return config;
   }
 
   /**
