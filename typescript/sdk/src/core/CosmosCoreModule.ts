@@ -3,6 +3,7 @@ import {
   SigningHyperlaneModuleClient,
 } from '@hyperlane-xyz/cosmos-sdk';
 import {
+  Address,
   Domain,
   ProtocolType,
   eqAddress,
@@ -12,7 +13,8 @@ import {
 import { CosmosDeployer } from '../deploy/CosmosDeployer.js';
 import { HookType } from '../hook/types.js';
 import { CosmosIsmModule } from '../ism/CosmosIsmModule.js';
-import { IsmType } from '../ism/types.js';
+import { DerivedIsmConfig } from '../ism/EvmIsmReader.js';
+import { IsmConfig, IsmType } from '../ism/types.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { AnnotatedCosmJsTransaction } from '../providers/ProviderType.js';
 import { ChainName, ChainNameOrId } from '../types.js';
@@ -192,13 +194,9 @@ export class CosmosCoreModule extends HyperlaneModule<
     const actualConfig = await this.read();
 
     let transactions: AnnotatedCosmJsTransaction[] = [];
-
     transactions.push(
+      ...(await this.createDefaultIsmUpdateTxs(actualConfig, expectedConfig)),
       ...this.createMailboxOwnerUpdateTxs(actualConfig, expectedConfig),
-    );
-
-    transactions.push(
-      ...(await this.createIsmUpdateTxs(actualConfig, expectedConfig)),
     );
 
     // TODO: what about hook updates?
@@ -227,23 +225,83 @@ export class CosmosCoreModule extends HyperlaneModule<
     ];
   }
 
-  private async createIsmUpdateTxs(
-    actualConfig: CoreConfig,
+  /**
+   * Create a transaction to update an existing ISM config, or deploy a new ISM and return a tx to setDefaultIsm
+   *
+   * @param actualConfig - The on-chain router configuration, including the ISM configuration, and address.
+   * @param expectedConfig - The expected token router configuration, including the ISM configuration.
+   * @returns Transaction that need to be executed to update the ISM configuration.
+   */
+  async createDefaultIsmUpdateTxs(
+    actualConfig: DerivedCoreConfig,
     expectedConfig: CoreConfig,
   ): Promise<AnnotatedCosmJsTransaction[]> {
+    const updateTransactions: AnnotatedCosmJsTransaction[] = [];
+
+    const actualDefaultIsmConfig = actualConfig.defaultIsm as DerivedIsmConfig;
+
+    // Try to update (may also deploy) Ism with the expected config
+    const { deployedIsm, ismUpdateTxs } = await this.deployOrUpdateIsm(
+      actualDefaultIsmConfig,
+      expectedConfig.defaultIsm,
+    );
+
+    if (ismUpdateTxs.length) {
+      updateTransactions.push(...ismUpdateTxs);
+    }
+
+    const newIsmDeployed = !eqAddress(
+      actualDefaultIsmConfig.address,
+      deployedIsm,
+    );
+    if (newIsmDeployed) {
+      const { mailbox } = this.serialize();
+      updateTransactions.push({
+        annotation: `Updating default ISM of Mailbox from ${mailbox} to ${deployedIsm}`,
+        typeUrl: REGISTRY.MsgSetMailbox.proto.type,
+        value: REGISTRY.MsgSetMailbox.proto.converter.create({
+          owner: actualConfig.owner,
+          mailbox_id: mailbox,
+          default_ism: deployedIsm,
+        }),
+      });
+    }
+
+    return updateTransactions;
+  }
+
+  /**
+   * Updates or deploys the ISM using the provided configuration.
+   *
+   * @returns Object with deployedIsm address, and update Transactions
+   */
+  public async deployOrUpdateIsm(
+    actualDefaultIsmConfig: DerivedIsmConfig,
+    expectDefaultIsmConfig: IsmConfig,
+  ): Promise<{
+    deployedIsm: Address;
+    ismUpdateTxs: AnnotatedCosmJsTransaction[];
+  }> {
+    const { mailbox } = this.serialize();
+
     const ismModule = new CosmosIsmModule(
       this.multiProvider,
       {
         addresses: {
-          mailbox: this.args.addresses.mailbox,
-          deployedIsm: this.args.addresses.default_ism,
+          mailbox: mailbox,
+          deployedIsm: actualDefaultIsmConfig.address,
         },
         chain: this.chainName,
-        config: actualConfig.defaultIsm,
+        config: actualDefaultIsmConfig.address,
       },
       this.signer,
     );
+    this.logger.info(
+      `Comparing target ISM config with ${this.args.chain} chain`,
+    );
+    const ismUpdateTxs = await ismModule.update(expectDefaultIsmConfig);
+    const { deployedIsm } = ismModule.serialize();
 
-    return ismModule.update(expectedConfig.defaultIsm);
+    return { deployedIsm, ismUpdateTxs };
   }
 }

@@ -1,7 +1,4 @@
-import {
-  REGISTRY,
-  SigningHyperlaneModuleClient,
-} from '@hyperlane-xyz/cosmos-sdk';
+import { SigningHyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
 import {
   Address,
   Domain,
@@ -94,21 +91,11 @@ export class CosmosIsmModule extends HyperlaneModule<
       return [];
     }
 
-    const defaultIsm = await this.deploy({
+    this.args.addresses.deployedIsm = await this.deploy({
       config: expectedConfig,
     });
 
-    return [
-      {
-        annotation: `Updating default ISM of Mailbox from ${this.args.addresses.deployedIsm} to ${defaultIsm}`,
-        typeUrl: REGISTRY.MsgSetMailbox.proto.type,
-        value: REGISTRY.MsgSetMailbox.proto.converter.create({
-          owner: actualConfig.owner,
-          mailbox_id: this.mailbox,
-          default_ism: defaultIsm,
-        }),
-      },
-    ];
+    return [];
   }
 
   // manually write static create function
