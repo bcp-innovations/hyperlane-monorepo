@@ -157,7 +157,7 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
   ) {
     // register all the custom amino tx types
     const aminoTypes = Object.values(REGISTRY)
-      .filter((r) => !!r.amino.type) // filter out responses which have no amino type
+      .filter((r) => !!r.amino.type) // filter out tx responses which have no amino type
       .reduce(
         (types, { proto, amino }) => ({
           ...types,

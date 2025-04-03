@@ -20,62 +20,53 @@ import { HyperlaneModuleClient, SigningHyperlaneModuleClient } from "@hyperlane-
 import { DirectSecp256k1Wallet } from '@cosmjs/proto-signing';
 
 // using hyperlane queries without needing signers
-const lightClient = await HyperlaneModuleClient.connect(
+const client = await HyperlaneModuleClient.connect(
   "https://rpc-endpoint:26657"
 );
 
-const mailboxes = await lightClient.query.core.Mailboxes();
-const bridgedSupply = await lightClient.query.warp.BridgedSupply({ id: "token-id" });
+const mailboxes = await client.query.core.Mailboxes();
+const bridgedSupply = await client.query.warp.BridgedSupply({ id: "token-id" });
 ...
 
 // performing hyperlane transactions
 const wallet = await DirectSecp256k1Wallet.fromKey(PRIV_KEY);
 
-const signingClient = await SigningHyperlaneModuleClient.connectWithSigner(
+const signer = await SigningHyperlaneModuleClient.connectWithSigner(
   "https://rpc-endpoint:26657",
   wallet,
 );
 
-const txReceipt = await signingClient.createMailbox({
+const { response: mailbox } = await signer.createMailbox({
   owner: '...',
   local_domain: '...',
   default_ism: '...',
   default_hook: '...',
   required_hook: '...',
-})
+});
 
-await signingClient.remoteTransfer({
+const mailboxId = mailbox.id;
+
+await signer.remoteTransfer({
   sender: '...',
   token_id: '...',
   destination_domain: '...',
   recipient: '...',
   amount: '...',
   ...
-})
+});
 
 // sign and broadcast custom messages
-await signingClient.signAndBroadcast(signer.getAccounts()[0], [txs...])
+await signer.signAndBroadcast(signer.getAccounts()[0], [txs...]);
 ```
+
+## Setup
+
+Node 18 or newer is required.
 
 ## Contribute
 
 First you need to install the dependencies by running `yarn install`.
 
-### Generating TS Types
-
-You can automatically generate the TypeScript types from the proto files of the Cosmos Hyperlane Module by executing the following commands. Note that this only needs to be done if the proto files change in the Cosmos Hyperlane Module project.
-
-```bash
-cd proto
-docker compose up
-```
-
-After this command has finished the newly generated types can be found under `src/types`.
-
 ### Building the project
 
 You can build the project with `yarn build`, the build output can be found under `dist`.
-
-## License
-
-Apache 2.0
