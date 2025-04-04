@@ -9,13 +9,13 @@ import { SigningHyperlaneModuleClient } from '../index.js';
 
 import { createSigner } from './utils.js';
 
-describe('cosmos sdk core e2e tests', async function () {
+describe('2. cosmos sdk core e2e tests', async function () {
   this.timeout(100_000);
 
   let signer: SigningHyperlaneModuleClient;
 
   before(async () => {
-    signer = await createSigner();
+    signer = await createSigner('alice');
   });
 
   step('create new Mailbox', async () => {
@@ -30,7 +30,7 @@ describe('cosmos sdk core e2e tests', async function () {
     const domainId = 1234;
 
     // ACT
-    const { response: mailbox } = await signer.createMailbox({
+    const txResponse = await signer.createMailbox({
       local_domain: domainId,
       default_ism: ismId,
       default_hook: '',
@@ -38,6 +38,10 @@ describe('cosmos sdk core e2e tests', async function () {
     });
 
     // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    const mailbox = txResponse.response;
+
     expect(mailbox.id).to.be.not.empty;
     expect(isValidAddressEvm(bytes32ToAddress(mailbox.id))).to.be.true;
 
@@ -54,5 +58,40 @@ describe('cosmos sdk core e2e tests', async function () {
     expect(mailboxQuery.mailbox!.default_ism).to.equal(ismId);
     expect(mailboxQuery.mailbox!.default_hook).to.be.empty;
     expect(mailboxQuery.mailbox!.required_hook).to.be.empty;
+  });
+
+  step('set Mailbox', async () => {
+    // ARRANGE
+    const newOwner = (await createSigner('bob')).account.address;
+
+    let mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+
+    const mailboxBefore = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    expect(mailboxBefore.owner).to.equal(signer.account.address);
+
+    // ACT
+    const txResponse = await signer.setMailbox({
+      mailbox_id: mailboxBefore.id,
+      default_ism: '',
+      default_hook: '',
+      required_hook: '',
+      new_owner: newOwner,
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+
+    const mailboxAfter = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+
+    expect(mailboxAfter.id).to.equal(mailboxBefore.id);
+    expect(mailboxAfter.local_domain).to.equal(mailboxBefore.local_domain);
+    expect(mailboxAfter.default_ism).to.equal(mailboxBefore.default_ism);
+    expect(mailboxAfter.default_hook).to.equal(mailboxBefore.default_hook);
+    expect(mailboxAfter.required_hook).to.equal(mailboxBefore.required_hook);
+    expect(mailboxAfter.owner).to.equal(newOwner);
   });
 });

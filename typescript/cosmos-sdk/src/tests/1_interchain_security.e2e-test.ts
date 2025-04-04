@@ -13,13 +13,13 @@ import { SigningHyperlaneModuleClient } from '../index.js';
 
 import { createSigner } from './utils.js';
 
-describe('cosmos sdk interchain security e2e tests', async function () {
+describe('1. cosmos sdk interchain security e2e tests', async function () {
   this.timeout(100_000);
 
   let signer: SigningHyperlaneModuleClient;
 
   before(async () => {
-    signer = await createSigner();
+    signer = await createSigner('alice');
   });
 
   step('create new NOOP ISM', async () => {
@@ -28,9 +28,13 @@ describe('cosmos sdk interchain security e2e tests', async function () {
     expect(isms.isms).to.be.empty;
 
     // ACT
-    const { response: noopIsm } = await signer.createNoopIsm({});
+    const txResponse = await signer.createNoopIsm({});
 
     // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    const noopIsm = txResponse.response;
+
     expect(noopIsm.id).to.be.not.empty;
     expect(isValidAddressEvm(bytes32ToAddress(noopIsm.id))).to.be.true;
 
@@ -67,12 +71,16 @@ describe('cosmos sdk interchain security e2e tests', async function () {
     validators.sort();
 
     // ACT
-    const { response: messageIdIsm } = await signer.createMessageIdMultisigIsm({
+    const txResponse = await signer.createMessageIdMultisigIsm({
       validators,
       threshold,
     });
 
     // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    const messageIdIsm = txResponse.response;
+
     expect(messageIdIsm.id).to.be.not.empty;
     expect(isValidAddressEvm(bytes32ToAddress(messageIdIsm.id))).to.be.true;
 
@@ -118,32 +126,34 @@ describe('cosmos sdk interchain security e2e tests', async function () {
     validators.sort();
 
     // ACT
-    const { response: messageIdIsm } = await signer.createMerkleRootMultisigIsm(
-      {
-        validators,
-        threshold,
-      },
-    );
+    const txResponse = await signer.createMerkleRootMultisigIsm({
+      validators,
+      threshold,
+    });
 
     // ASSERT
-    expect(messageIdIsm.id).to.be.not.empty;
-    expect(isValidAddressEvm(bytes32ToAddress(messageIdIsm.id))).to.be.true;
+    expect(txResponse.code).to.equal(0);
+
+    const merkleRootIsm = txResponse.response;
+
+    expect(merkleRootIsm.id).to.be.not.empty;
+    expect(isValidAddressEvm(bytes32ToAddress(merkleRootIsm.id))).to.be.true;
 
     isms = await signer.query.interchainSecurity.Isms({});
     expect(isms.isms).to.have.lengthOf(3);
 
     let ism = await signer.query.interchainSecurity.Ism({
-      id: messageIdIsm.id,
+      id: merkleRootIsm.id,
     });
     expect(ism.ism?.type_url).to.equal(
       '/hyperlane.core.interchain_security.v1.MerkleRootMultisigISM',
     );
 
     let decodedIsm = await signer.query.interchainSecurity.DecodedIsm({
-      id: messageIdIsm.id,
+      id: merkleRootIsm.id,
     });
 
-    expect(decodedIsm.ism.id).to.equal(messageIdIsm.id);
+    expect(decodedIsm.ism.id).to.equal(merkleRootIsm.id);
     expect(decodedIsm.ism.owner).to.equal(signer.account.address);
 
     expect((decodedIsm.ism as MerkleRootMultisigISM).threshold).to.equal(
