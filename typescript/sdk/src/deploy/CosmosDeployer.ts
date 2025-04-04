@@ -32,7 +32,7 @@ export class CosmosDeployer {
     switch (ismType) {
       case IsmType.MERKLE_ROOT_MULTISIG:
         const { response: merkleRootResponse } =
-          await this.signer.createMerklerootMultisigIsm({
+          await this.signer.createMerkleRootMultisigIsm({
             validators: ismConfig.validators,
             threshold: ismConfig.threshold,
           });

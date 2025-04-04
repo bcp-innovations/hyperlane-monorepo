@@ -1,7 +1,7 @@
 import { zeroAddress } from 'viem';
 
 import {
-  REGISTRY,
+  COSMOS_MODULE_MESSAGE_REGISTRY as R,
   SigningHyperlaneModuleClient,
 } from '@hyperlane-xyz/cosmos-sdk';
 import {
@@ -150,8 +150,8 @@ export class CosmosWarpModule extends HyperlaneModule<
     routesToEnroll.forEach((domainId) => {
       updateTransactions.push({
         annotation: `Enrolling Router ${this.args.addresses.deployedTokenRoute} on ${this.args.chain}`,
-        typeUrl: REGISTRY.MsgEnrollRemoteRouter.proto.type,
-        value: REGISTRY.MsgEnrollRemoteRouter.proto.converter.create({
+        typeUrl: R.MsgEnrollRemoteRouter.proto.type,
+        value: R.MsgEnrollRemoteRouter.proto.converter.create({
           owner: actualConfig.owner,
           token_id: this.args.addresses.deployedTokenRoute,
           remote_router: {
@@ -197,8 +197,8 @@ export class CosmosWarpModule extends HyperlaneModule<
     routesToUnenroll.forEach((domainId) => {
       updateTransactions.push({
         annotation: `Unenrolling Router ${this.args.addresses.deployedTokenRoute} on ${this.args.chain}`,
-        typeUrl: REGISTRY.MsgUnrollRemoteRouter.proto.type,
-        value: REGISTRY.MsgUnrollRemoteRouter.proto.converter.create({
+        typeUrl: R.MsgUnrollRemoteRouter.proto.type,
+        value: R.MsgUnrollRemoteRouter.proto.converter.create({
           owner: actualConfig.owner,
           token_id: this.args.addresses.deployedTokenRoute,
           receiver_domain: parseInt(domainId),
@@ -251,8 +251,8 @@ export class CosmosWarpModule extends HyperlaneModule<
       gasRouterConfigs.forEach(({ domain, gas }) => {
         updateTransactions.push({
           annotation: `Setting destination gas for ${this.args.addresses.deployedTokenRoute} on ${this.args.chain}`,
-          typeUrl: REGISTRY.MsgEnrollRemoteRouter.proto.type,
-          value: REGISTRY.MsgEnrollRemoteRouter.proto.converter.create({
+          typeUrl: R.MsgEnrollRemoteRouter.proto.type,
+          value: R.MsgEnrollRemoteRouter.proto.converter.create({
             owner: actualConfig.owner,
             token_id: this.args.addresses.deployedTokenRoute,
             remote_router: {
@@ -306,8 +306,8 @@ export class CosmosWarpModule extends HyperlaneModule<
     if (actualDeployedIsm !== expectedDeployedIsm) {
       updateTransactions.push({
         annotation: `Setting ISM for Warp Route to ${expectedDeployedIsm}`,
-        typeUrl: REGISTRY.MsgSetToken.proto.type,
-        value: REGISTRY.MsgSetToken.proto.converter.create({
+        typeUrl: R.MsgSetToken.proto.type,
+        value: R.MsgSetToken.proto.converter.create({
           owner: actualConfig.owner,
           token_id: this.args.addresses.deployedTokenRoute,
           ism_id: expectedDeployedIsm,
@@ -336,8 +336,8 @@ export class CosmosWarpModule extends HyperlaneModule<
     return [
       {
         annotation: `Transferring ownership of ${this.args.addresses.deployedTokenRoute} from ${actualConfig.owner} to ${expectedConfig.owner}`,
-        typeUrl: REGISTRY.MsgSetToken.proto.type,
-        value: REGISTRY.MsgSetToken.proto.converter.create({
+        typeUrl: R.MsgSetToken.proto.type,
+        value: R.MsgSetToken.proto.converter.create({
           owner: actualConfig.owner,
           new_owner: expectedConfig.owner,
         }),

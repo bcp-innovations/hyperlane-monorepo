@@ -136,7 +136,7 @@ export class CosmosIsmModule extends HyperlaneModule<
     switch (ismType) {
       case IsmType.MERKLE_ROOT_MULTISIG:
         const { response: merkleRootResponse } =
-          await this.signer.createMerklerootMultisigIsm({
+          await this.signer.createMerkleRootMultisigIsm({
             validators: config.validators,
             threshold: config.threshold,
           });

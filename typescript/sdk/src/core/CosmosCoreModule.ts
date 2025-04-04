@@ -1,5 +1,5 @@
 import {
-  REGISTRY,
+  COSMOS_MODULE_MESSAGE_REGISTRY as R,
   SigningHyperlaneModuleClient,
 } from '@hyperlane-xyz/cosmos-sdk';
 import {
@@ -215,8 +215,8 @@ export class CosmosCoreModule extends HyperlaneModule<
     return [
       {
         annotation: `Transferring ownership of Mailbox from ${actualConfig.owner} to ${expectedConfig.owner}`,
-        typeUrl: REGISTRY.MsgSetMailbox.proto.type,
-        value: REGISTRY.MsgSetMailbox.proto.converter.create({
+        typeUrl: R.MsgSetMailbox.proto.type,
+        value: R.MsgSetMailbox.proto.converter.create({
           owner: actualConfig.owner,
           mailbox_id: this.args.addresses.mailbox,
           new_owner: expectedConfig.owner,
@@ -258,8 +258,8 @@ export class CosmosCoreModule extends HyperlaneModule<
       const { mailbox } = this.serialize();
       updateTransactions.push({
         annotation: `Updating default ISM of Mailbox from ${mailbox} to ${deployedIsm}`,
-        typeUrl: REGISTRY.MsgSetMailbox.proto.type,
-        value: REGISTRY.MsgSetMailbox.proto.converter.create({
+        typeUrl: R.MsgSetMailbox.proto.type,
+        value: R.MsgSetMailbox.proto.converter.create({
           owner: actualConfig.owner,
           mailbox_id: mailbox,
           default_ism: deployedIsm,
