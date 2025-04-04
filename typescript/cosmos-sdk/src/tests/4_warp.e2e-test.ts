@@ -3,9 +3,12 @@ import { step } from 'mocha-steps';
 
 import { HypTokenType } from '../../../cosmos-types/src/types/hyperlane/warp/v1/types.js';
 import {
+  addressToBytes32,
   bytes32ToAddress,
+  convertToProtocolAddress,
   isValidAddressEvm,
-} from '../../../utils/dist/addresses.js';
+} from '../../../utils/src/addresses.js';
+import { ProtocolType } from '../../../utils/src/types.js';
 import { SigningHyperlaneModuleClient } from '../index.js';
 
 import { createSigner } from './utils.js';
@@ -99,6 +102,140 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     expect(tokenQuery.token?.token_type).to.equal(
       HypTokenType.HYP_TOKEN_TYPE_SYNTHETIC,
     );
+  });
+
+  step('enroll remote router', async () => {
+    // ARRANGE
+    let tokens = await signer.query.warp.Tokens({});
+    expect(tokens.tokens).to.have.lengthOf(2);
+
+    const token = tokens.tokens[0];
+
+    let mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+
+    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+
+    let remoteRouters = await signer.query.warp.RemoteRouters({
+      id: token.id,
+    });
+    expect(remoteRouters.remote_routers).to.have.lengthOf(0);
+    const gas = '10000';
+
+    // ACT
+    const txResponse = await signer.enrollRemoteRouter({
+      token_id: token.id,
+      remote_router: {
+        receiver_domain: mailbox.local_domain,
+        receiver_contract: mailbox.id,
+        gas,
+      },
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    remoteRouters = await signer.query.warp.RemoteRouters({
+      id: token.id,
+    });
+    expect(remoteRouters.remote_routers).to.have.lengthOf(1);
+
+    const remoteRouter = remoteRouters.remote_routers[0];
+
+    expect(remoteRouter.receiver_domain).to.equal(mailbox.local_domain);
+    expect(remoteRouter.receiver_contract).to.equal(mailbox.id);
+    expect(remoteRouter.gas).to.equal(gas);
+  });
+
+  // TODO: still fails
+  step('remote transfer', async () => {
+    // ARRANGE
+    let tokens = await signer.query.warp.Tokens({});
+    expect(tokens.tokens).to.have.lengthOf(2);
+
+    const token = tokens.tokens[0];
+
+    let mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+
+    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    expect(mailbox.message_sent).to.equal(0);
+
+    const isms = await signer.query.interchainSecurity.DecodedIsms({});
+    const igps = await signer.query.postDispatch.Igps({});
+    const merkleTreeHooks = await signer.query.postDispatch.MerkleTreeHooks({});
+
+    const mailboxTxResponse = await signer.setMailbox({
+      mailbox_id: mailbox.id,
+      default_ism: isms.isms[isms.isms.length - 1].id,
+      default_hook: igps.igps[0].id,
+      required_hook: merkleTreeHooks.merkle_tree_hooks[0].id,
+      new_owner: '',
+    });
+    expect(mailboxTxResponse.code).to.equal(0);
+
+    let remoteRouters = await signer.query.warp.RemoteRouters({
+      id: token.id,
+    });
+    expect(remoteRouters.remote_routers).to.have.lengthOf(1);
+
+    const remoteRouter = remoteRouters.remote_routers[0];
+
+    const interchainGas = await signer.query.warp.QuoteRemoteTransfer({
+      id: token.id,
+      destination_domain: remoteRouter.receiver_domain.toString(),
+    });
+
+    const amount = '1000000';
+
+    // ACT
+    const txResponse = await signer.remoteTransfer({
+      token_id: token.id,
+      destination_domain: remoteRouter.receiver_domain,
+      recipient: addressToBytes32(
+        convertToProtocolAddress(signer.account.address, ProtocolType.Ethereum),
+        ProtocolType.Ethereum,
+      ),
+      amount,
+      custom_hook_id: '',
+      gas_limit: remoteRouter.gas,
+      max_fee: interchainGas.gas_payment[0],
+      custom_hook_metadata: '',
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    // const messageId = txResponse.response.message_id;
+  });
+
+  step('unroll remote router', async () => {
+    // ARRANGE
+    let tokens = await signer.query.warp.Tokens({});
+    expect(tokens.tokens).to.have.lengthOf(2);
+
+    const token = tokens.tokens[0];
+
+    let remoteRouters = await signer.query.warp.RemoteRouters({
+      id: token.id,
+    });
+    expect(remoteRouters.remote_routers).to.have.lengthOf(1);
+
+    const receiverDomainId = 1234;
+
+    // ACT
+    const txResponse = await signer.unrollRemoteRouter({
+      token_id: token.id,
+      receiver_domain: receiverDomainId,
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    remoteRouters = await signer.query.warp.RemoteRouters({
+      id: token.id,
+    });
+    expect(remoteRouters.remote_routers).to.have.lengthOf(0);
   });
 
   step('set token', async () => {

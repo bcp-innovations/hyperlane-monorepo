@@ -120,7 +120,7 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     expect(igps.igps).to.have.lengthOf(1);
 
     const igp = igps.igps[igps.igps.length - 1];
-    const remoteDomainId = 4321;
+    const remoteDomainId = 1234;
     const gasOverhead = '10000';
     const gasPrice = '2';
     const tokenExchangeRate = '1';
