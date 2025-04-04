@@ -313,7 +313,7 @@ export class SigningHyperlaneModuleClient extends SigningStargateClient {
     return this.submitTx(msg, options);
   }
 
-  public async createMerklerootMultisigIsm(
+  public async createMerkleRootMultisigIsm(
     value: Omit<isTx.MsgCreateMerkleRootMultisigIsm, 'creator'>,
     options?: {
       fee?: StdFee | 'auto' | number;
