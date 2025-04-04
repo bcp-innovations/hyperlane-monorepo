@@ -53,11 +53,12 @@ describe('2. cosmos sdk core e2e tests', async function () {
     });
 
     expect(mailboxQuery.mailbox).not.to.be.undefined;
-    expect(mailboxQuery.mailbox!.id).to.equal(mailbox.id);
-    expect(mailboxQuery.mailbox!.local_domain).to.equal(domainId);
-    expect(mailboxQuery.mailbox!.default_ism).to.equal(ismId);
-    expect(mailboxQuery.mailbox!.default_hook).to.be.empty;
-    expect(mailboxQuery.mailbox!.required_hook).to.be.empty;
+    expect(mailboxQuery.mailbox?.id).to.equal(mailbox.id);
+    expect(mailboxQuery.mailbox?.owner).to.equal(signer.account.address);
+    expect(mailboxQuery.mailbox?.local_domain).to.equal(domainId);
+    expect(mailboxQuery.mailbox?.default_ism).to.equal(ismId);
+    expect(mailboxQuery.mailbox?.default_hook).to.be.empty;
+    expect(mailboxQuery.mailbox?.required_hook).to.be.empty;
   });
 
   step('set Mailbox', async () => {
@@ -88,10 +89,10 @@ describe('2. cosmos sdk core e2e tests', async function () {
     const mailboxAfter = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
 
     expect(mailboxAfter.id).to.equal(mailboxBefore.id);
+    expect(mailboxAfter.owner).to.equal(newOwner);
     expect(mailboxAfter.local_domain).to.equal(mailboxBefore.local_domain);
     expect(mailboxAfter.default_ism).to.equal(mailboxBefore.default_ism);
     expect(mailboxAfter.default_hook).to.equal(mailboxBefore.default_hook);
     expect(mailboxAfter.required_hook).to.equal(mailboxBefore.required_hook);
-    expect(mailboxAfter.owner).to.equal(newOwner);
   });
 });
