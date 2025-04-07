@@ -5,6 +5,7 @@ import {
   bytes32ToAddress,
   isValidAddressEvm,
 } from '../../../utils/dist/addresses.js';
+import { formatMessage, messageId } from '../../../utils/src/messages.js';
 import { SigningHyperlaneModuleClient } from '../index.js';
 
 import { createSigner } from './utils.js';
@@ -161,16 +162,98 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     );
   });
 
-  step('set new IGP owner', async () => {
+  step('pay for gas', async () => {
     // ARRANGE
-    const newOwner = (await createSigner('bob')).account.address;
-
+    const address = '0xA56009c72c0191a1D56e2feA5Bd8250707FF1874';
+    const destinationDomainId = 1234;
     const denom = 'uhyp';
+    const amount = {
+      denom,
+      amount: '1000000',
+    };
 
     const igpCreateTxResponse = await signer.createIgp({
       denom,
     });
     expect(igpCreateTxResponse.code).to.equal(0);
+
+    let igps = await signer.query.postDispatch.Igps({});
+    expect(igps.igps).to.have.lengthOf(2);
+
+    const igpBefore = igps.igps[igps.igps.length - 1];
+    expect(igpBefore.claimable_fees).to.be.empty;
+
+    const testMessageId = messageId(
+      formatMessage(
+        1,
+        0,
+        destinationDomainId,
+        address,
+        destinationDomainId,
+        address,
+        '0x1234',
+      ),
+    );
+
+    // ACT
+    const txResponse = await signer.payForGas({
+      igp_id: igpBefore.id,
+      message_id: testMessageId,
+      destination_domain: destinationDomainId,
+      gas_limit: '10000',
+      amount,
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    igps = await signer.query.postDispatch.Igps({});
+    expect(igps.igps).to.have.lengthOf(2);
+
+    const igpAfter = igps.igps[igps.igps.length - 1];
+
+    expect(igpAfter.id).to.equal(igpBefore.id);
+    expect(igpAfter.denom).to.equal(igpBefore.denom);
+    expect(igpAfter.claimable_fees).to.have.lengthOf(1);
+    expect(igpAfter.claimable_fees[0]).deep.equal(amount);
+  });
+
+  step('claim', async () => {
+    // ARRANGE
+    const denom = 'uhyp';
+    const amount = {
+      denom,
+      amount: '1000000',
+    };
+
+    let igps = await signer.query.postDispatch.Igps({});
+    expect(igps.igps).to.have.lengthOf(2);
+
+    const igpBefore = igps.igps[igps.igps.length - 1];
+    expect(igpBefore.claimable_fees).to.have.lengthOf(1);
+    expect(igpBefore.claimable_fees[0]).deep.equal(amount);
+
+    // ACT
+    const txResponse = await signer.claim({
+      igp_id: igpBefore.id,
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    igps = await signer.query.postDispatch.Igps({});
+    expect(igps.igps).to.have.lengthOf(2);
+
+    const igpAfter = igps.igps[igps.igps.length - 1];
+
+    expect(igpAfter.id).to.equal(igpBefore.id);
+    expect(igpAfter.denom).to.equal(igpBefore.denom);
+    expect(igpAfter.claimable_fees).to.be.empty;
+  });
+
+  step('set igp owner', async () => {
+    // ARRANGE
+    const newOwner = (await createSigner('bob')).account.address;
 
     let igps = await signer.query.postDispatch.Igps({});
     expect(igps.igps).to.have.lengthOf(2);
