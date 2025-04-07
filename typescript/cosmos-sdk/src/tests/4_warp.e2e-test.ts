@@ -127,7 +127,7 @@ describe('4. cosmos sdk warp e2e tests', async function () {
       token_id: token.id,
       remote_router: {
         receiver_domain: mailbox.local_domain,
-        receiver_contract: mailbox.id,
+        receiver_contract: token.id,
         gas,
       },
     });
@@ -143,11 +143,10 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     const remoteRouter = remoteRouters.remote_routers[0];
 
     expect(remoteRouter.receiver_domain).to.equal(mailbox.local_domain);
-    expect(remoteRouter.receiver_contract).to.equal(mailbox.id);
+    expect(remoteRouter.receiver_contract).to.equal(token.id);
     expect(remoteRouter.gas).to.equal(gas);
   });
 
-  // TODO: still fails
   step('remote transfer', async () => {
     // ARRANGE
     let tokens = await signer.query.warp.Tokens({});
@@ -158,19 +157,21 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     let mailboxes = await signer.query.core.Mailboxes({});
     expect(mailboxes.mailboxes).to.have.lengthOf(1);
 
-    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    let mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
     expect(mailbox.message_sent).to.equal(0);
 
     const isms = await signer.query.interchainSecurity.DecodedIsms({});
     const igps = await signer.query.postDispatch.Igps({});
     const merkleTreeHooks = await signer.query.postDispatch.MerkleTreeHooks({});
 
-    const mailboxTxResponse = await signer.setMailbox({
+    const bobSigner = await createSigner('bob');
+
+    const mailboxTxResponse = await bobSigner.setMailbox({
       mailbox_id: mailbox.id,
       default_ism: isms.isms[isms.isms.length - 1].id,
       default_hook: igps.igps[0].id,
       required_hook: merkleTreeHooks.merkle_tree_hooks[0].id,
-      new_owner: '',
+      new_owner: signer.account.address,
     });
     expect(mailboxTxResponse.code).to.equal(0);
 
@@ -186,8 +187,6 @@ describe('4. cosmos sdk warp e2e tests', async function () {
       destination_domain: remoteRouter.receiver_domain.toString(),
     });
 
-    const amount = '1000000';
-
     // ACT
     const txResponse = await signer.remoteTransfer({
       token_id: token.id,
@@ -196,7 +195,7 @@ describe('4. cosmos sdk warp e2e tests', async function () {
         convertToProtocolAddress(signer.account.address, ProtocolType.Ethereum),
         ProtocolType.Ethereum,
       ),
-      amount,
+      amount: '1000000',
       custom_hook_id: '',
       gas_limit: remoteRouter.gas,
       max_fee: interchainGas.gas_payment[0],
@@ -206,7 +205,14 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     // ASSERT
     expect(txResponse.code).to.equal(0);
 
-    // const messageId = txResponse.response.message_id;
+    const messageId = txResponse.response.message_id;
+    expect(isValidAddressEvm(bytes32ToAddress(messageId))).to.be.true;
+
+    mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+
+    mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    expect(mailbox.message_sent).to.equal(1);
   });
 
   step('unroll remote router', async () => {

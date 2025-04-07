@@ -119,11 +119,11 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     let igps = await signer.query.postDispatch.Igps({});
     expect(igps.igps).to.have.lengthOf(1);
 
-    const igp = igps.igps[igps.igps.length - 1];
+    const igp = igps.igps[0];
     const remoteDomainId = 1234;
-    const gasOverhead = '10000';
-    const gasPrice = '2';
-    const tokenExchangeRate = '1';
+    const gasOverhead = '200000';
+    const gasPrice = '1';
+    const tokenExchangeRate = '10000000000';
 
     let gasConfigs = await signer.query.postDispatch.DestinationGasConfigs({
       id: igp.id,
@@ -165,8 +165,15 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     // ARRANGE
     const newOwner = (await createSigner('bob')).account.address;
 
+    const denom = 'uhyp';
+
+    const igpCreateTxResponse = await signer.createIgp({
+      denom,
+    });
+    expect(igpCreateTxResponse.code).to.equal(0);
+
     let igps = await signer.query.postDispatch.Igps({});
-    expect(igps.igps).to.have.lengthOf(1);
+    expect(igps.igps).to.have.lengthOf(2);
 
     const igpBefore = igps.igps[igps.igps.length - 1];
     expect(igpBefore.owner).to.equal(signer.account.address);
@@ -181,7 +188,7 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     expect(txResponse.code).to.equal(0);
 
     igps = await signer.query.postDispatch.Igps({});
-    expect(igps.igps).to.have.lengthOf(1);
+    expect(igps.igps).to.have.lengthOf(2);
 
     const igpAfter = igps.igps[igps.igps.length - 1];
 
