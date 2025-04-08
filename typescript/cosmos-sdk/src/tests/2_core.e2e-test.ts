@@ -18,14 +18,14 @@ describe('2. cosmos sdk core e2e tests', async function () {
     signer = await createSigner('alice');
   });
 
-  step('create new Mailbox', async () => {
+  step('create new mailbox', async () => {
     // ARRANGE
     let mailboxes = await signer.query.core.Mailboxes({});
     expect(mailboxes.mailboxes).to.have.lengthOf(0);
 
     const { isms } = await signer.query.interchainSecurity.DecodedIsms({});
-    // we take the latest created ISM which is a MerkleRootMultisigISM
-    const ismId = isms[isms.length - 1].id;
+    // take the Noop ISM
+    const ismId = isms[0].id;
 
     const domainId = 1234;
 
@@ -61,12 +61,26 @@ describe('2. cosmos sdk core e2e tests', async function () {
     expect(mailboxQuery.mailbox?.required_hook).to.be.empty;
   });
 
-  step('set Mailbox', async () => {
+  step('set mailbox', async () => {
     // ARRANGE
     const newOwner = (await createSigner('bob')).account.address;
 
+    const domainId = 1234;
+
+    const { isms } = await signer.query.interchainSecurity.DecodedIsms({});
+    // this should be a noop ISM
+    const ismId = isms[0].id;
+
+    const createMailboxTxResponse = await signer.createMailbox({
+      local_domain: domainId,
+      default_ism: ismId,
+      default_hook: '',
+      required_hook: '',
+    });
+    expect(createMailboxTxResponse.code).to.equal(0);
+
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
     const mailboxBefore = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
     expect(mailboxBefore.owner).to.equal(signer.account.address);
@@ -84,7 +98,7 @@ describe('2. cosmos sdk core e2e tests', async function () {
     expect(txResponse.code).to.equal(0);
 
     mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
     const mailboxAfter = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
 

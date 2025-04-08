@@ -57,9 +57,9 @@ describe('3. cosmos sdk post dispatch e2e tests', async function () {
     expect(merkleTrees.merkle_tree_hooks).to.have.lengthOf(0);
 
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    const mailbox = mailboxes.mailboxes[0];
 
     // ACT
     const txResponse = await signer.createMerkleTreeHook({

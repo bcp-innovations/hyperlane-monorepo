@@ -8,6 +8,7 @@ import {
   convertToProtocolAddress,
   isValidAddressEvm,
 } from '../../../utils/src/addresses.js';
+import { formatMessage } from '../../../utils/src/messages.js';
 import { ProtocolType } from '../../../utils/src/types.js';
 import { SigningHyperlaneModuleClient } from '../index.js';
 
@@ -28,9 +29,9 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     expect(tokens.tokens).to.have.lengthOf(0);
 
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    const mailbox = mailboxes.mailboxes[0];
     const denom = 'uhyp';
 
     // ACT
@@ -70,9 +71,9 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     expect(tokens.tokens).to.have.lengthOf(1);
 
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    const mailbox = mailboxes.mailboxes[0];
 
     // ACT
     const txResponse = await signer.createSyntheticToken({
@@ -112,9 +113,9 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     const token = tokens.tokens[0];
 
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    const mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    const mailbox = mailboxes.mailboxes[0];
 
     let remoteRouters = await signer.query.warp.RemoteRouters({
       id: token.id,
@@ -127,7 +128,7 @@ describe('4. cosmos sdk warp e2e tests', async function () {
       token_id: token.id,
       remote_router: {
         receiver_domain: mailbox.local_domain,
-        receiver_contract: token.id,
+        receiver_contract: mailbox.id,
         gas,
       },
     });
@@ -143,7 +144,7 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     const remoteRouter = remoteRouters.remote_routers[0];
 
     expect(remoteRouter.receiver_domain).to.equal(mailbox.local_domain);
-    expect(remoteRouter.receiver_contract).to.equal(token.id);
+    expect(remoteRouter.receiver_contract).to.equal(mailbox.id);
     expect(remoteRouter.gas).to.equal(gas);
   });
 
@@ -155,23 +156,21 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     const token = tokens.tokens[0];
 
     let mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    let mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    let mailbox = mailboxes.mailboxes[0];
     expect(mailbox.message_sent).to.equal(0);
 
     const isms = await signer.query.interchainSecurity.DecodedIsms({});
     const igps = await signer.query.postDispatch.Igps({});
     const merkleTreeHooks = await signer.query.postDispatch.MerkleTreeHooks({});
 
-    const bobSigner = await createSigner('bob');
-
-    const mailboxTxResponse = await bobSigner.setMailbox({
+    const mailboxTxResponse = await signer.setMailbox({
       mailbox_id: mailbox.id,
-      default_ism: isms.isms[isms.isms.length - 1].id,
+      default_ism: isms.isms[0].id,
       default_hook: igps.igps[0].id,
       required_hook: merkleTreeHooks.merkle_tree_hooks[0].id,
-      new_owner: signer.account.address,
+      new_owner: '',
     });
     expect(mailboxTxResponse.code).to.equal(0);
 
@@ -209,10 +208,64 @@ describe('4. cosmos sdk warp e2e tests', async function () {
     expect(isValidAddressEvm(bytes32ToAddress(messageId))).to.be.true;
 
     mailboxes = await signer.query.core.Mailboxes({});
-    expect(mailboxes.mailboxes).to.have.lengthOf(1);
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
 
-    mailbox = mailboxes.mailboxes[mailboxes.mailboxes.length - 1];
+    mailbox = mailboxes.mailboxes[0];
     expect(mailbox.message_sent).to.equal(1);
+  });
+
+  step('process message', async () => {
+    // ARRANGE
+    const domainId = 1234;
+    const gas = '10000';
+
+    let mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
+
+    const mailboxBefore = mailboxes.mailboxes[0];
+    expect(mailboxBefore.message_received).to.equal(0);
+
+    let tokens = await signer.query.warp.Tokens({});
+    expect(tokens.tokens).to.have.lengthOf(2);
+
+    const token = tokens.tokens[1];
+
+    const routerTxResponse = await signer.enrollRemoteRouter({
+      token_id: token.id,
+      remote_router: {
+        receiver_domain: mailboxBefore.local_domain,
+        receiver_contract: mailboxBefore.id,
+        gas,
+      },
+    });
+
+    expect(routerTxResponse.code).to.equal(0);
+
+    const message = formatMessage(
+      3,
+      0,
+      domainId,
+      mailboxBefore.id,
+      mailboxBefore.local_domain,
+      token.id,
+      '0x0000000000000000000000000c60e7ecd06429052223c78452f791aab5c5cac60000000000000000000000000000000000000000000000000000000002faf080',
+    );
+
+    // ACT
+    const txResponse = await signer.processMessage({
+      mailbox_id: mailboxBefore.id,
+      metadata: '',
+      message,
+    });
+
+    // ASSERT
+    expect(txResponse.code).to.equal(0);
+
+    mailboxes = await signer.query.core.Mailboxes({});
+    expect(mailboxes.mailboxes).to.have.lengthOf(2);
+
+    const mailboxAfter = mailboxes.mailboxes[0];
+    expect(mailboxAfter.message_received).to.equal(1);
   });
 
   step('unroll remote router', async () => {
