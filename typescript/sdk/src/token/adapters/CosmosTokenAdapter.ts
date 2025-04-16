@@ -67,8 +67,16 @@ export class CosmNativeTokenAdapter
     }
   }
 
-  getMetadata(): Promise<TokenMetadata> {
-    throw new Error('Metadata not available to native tokens');
+  async getMetadata(): Promise<TokenMetadata> {
+    const token = await this.multiProvider.getNativeToken(this.chainName);
+    const totalSupply = (await this.getTotalSupply())?.toString() ?? '0';
+
+    return {
+      symbol: token.symbol,
+      name: token.name,
+      totalSupply,
+      decimals: token.decimals,
+    };
   }
 
   async getMinimumTransferAmount(_recipient: Address): Promise<bigint> {
