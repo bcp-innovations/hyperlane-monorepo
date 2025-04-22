@@ -461,6 +461,7 @@ export {
   RemoteIcaRouterConfigSchema,
 } from './ica/types.js';
 export { EvmIsmModule } from './ism/EvmIsmModule.js';
+export { CosmosIsmModule } from './ism/CosmosIsmModule.js';
 export {
   chainMetadataToCosmosChain,
   chainMetadataToViemChain,

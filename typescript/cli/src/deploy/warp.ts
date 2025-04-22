@@ -14,6 +14,7 @@ import {
   ChainSubmissionStrategy,
   ChainSubmissionStrategySchema,
   ContractVerifier,
+  CosmosIsmModule,
   EvmERC20WarpModule,
   EvmHookModule,
   EvmIsmModule,
@@ -327,17 +328,42 @@ async function createWarpIsm({
     `Finished creating ${interchainSecurityModule.type} ISM for token on ${chain} chain.`,
   );
 
-  const evmIsmModule = await EvmIsmModule.create({
-    chain,
-    mailbox: chainAddresses.mailbox,
-    multiProvider: context.multiProvider,
-    proxyFactoryFactories: extractIsmAndHookFactoryAddresses(chainAddresses),
-    config: interchainSecurityModule,
-    ccipContractCache,
-    contractVerifier,
-  });
-  const { deployedIsm } = evmIsmModule.serialize();
-  return deployedIsm;
+  const protocolType = context.multiProvider.getProtocol(chain);
+
+  switch (protocolType) {
+    case ProtocolType.Ethereum: {
+      const evmIsmModule = await EvmIsmModule.create({
+        chain,
+        mailbox: chainAddresses.mailbox,
+        multiProvider: context.multiProvider,
+        proxyFactoryFactories:
+          extractIsmAndHookFactoryAddresses(chainAddresses),
+        config: interchainSecurityModule,
+        ccipContractCache,
+        contractVerifier,
+      });
+      const { deployedIsm } = evmIsmModule.serialize();
+      return deployedIsm;
+    }
+    case ProtocolType.Cosmos: {
+      const signer = context.multiProtocolSigner?.getCosmosSigner(chain)!;
+
+      const cosmosIsmModule = await CosmosIsmModule.create({
+        chain,
+        multiProvider: context.multiProvider,
+        addresses: {
+          deployedIsm: '',
+          mailbox: chainAddresses.mailbox,
+        },
+        config: interchainSecurityModule,
+        signer,
+      });
+      const { deployedIsm } = cosmosIsmModule.serialize();
+      return deployedIsm;
+    }
+    default:
+      throw new Error(`Protocol type ${protocolType} not supported`);
+  }
 }
 
 async function createWarpHook({
@@ -363,36 +389,51 @@ async function createWarpHook({
     return hook;
   }
 
-  logBlue(`Loading registry factory addresses for ${chain}...`);
+  const protocolType = context.multiProvider.getProtocol(chain);
 
-  logGray(`Creating ${hook.type} Hook for token on ${chain} chain...`);
+  switch (protocolType) {
+    case ProtocolType.Ethereum: {
+      logBlue(`Loading registry factory addresses for ${chain}...`);
 
-  // If config.proxyadmin.address exists, then use that. otherwise deploy a new proxyAdmin
-  const proxyAdminAddress: Address =
-    warpConfig.proxyAdmin?.address ??
-    (
-      await context.multiProvider.handleDeploy(
+      logGray(`Creating ${hook.type} Hook for token on ${chain} chain...`);
+
+      // If config.proxyadmin.address exists, then use that. otherwise deploy a new proxyAdmin
+      const proxyAdminAddress: Address =
+        warpConfig.proxyAdmin?.address ??
+        (
+          await context.multiProvider.handleDeploy(
+            chain,
+            new ProxyAdmin__factory(),
+            [],
+          )
+        ).address;
+
+      const evmHookModule = await EvmHookModule.create({
         chain,
-        new ProxyAdmin__factory(),
-        [],
-      )
-    ).address;
-
-  const evmHookModule = await EvmHookModule.create({
-    chain,
-    multiProvider: context.multiProvider,
-    coreAddresses: {
-      mailbox: chainAddresses.mailbox,
-      proxyAdmin: proxyAdminAddress,
-    },
-    config: hook,
-    ccipContractCache,
-    contractVerifier,
-    proxyFactoryFactories: extractIsmAndHookFactoryAddresses(chainAddresses),
-  });
-  logGreen(`Finished creating ${hook.type} Hook for token on ${chain} chain.`);
-  const { deployedHook } = evmHookModule.serialize();
-  return deployedHook;
+        multiProvider: context.multiProvider,
+        coreAddresses: {
+          mailbox: chainAddresses.mailbox,
+          proxyAdmin: proxyAdminAddress,
+        },
+        config: hook,
+        ccipContractCache,
+        contractVerifier,
+        proxyFactoryFactories:
+          extractIsmAndHookFactoryAddresses(chainAddresses),
+      });
+      logGreen(
+        `Finished creating ${hook.type} Hook for token on ${chain} chain.`,
+      );
+      const { deployedHook } = evmHookModule.serialize();
+      return deployedHook;
+    }
+    case ProtocolType.Cosmos: {
+      logBlue(`No warp hooks for cosmos chains, skipping deployment.`);
+      return hook;
+    }
+    default:
+      throw new Error(`Protocol type ${protocolType} not supported`);
+  }
 }
 
 async function getWarpCoreConfig(
