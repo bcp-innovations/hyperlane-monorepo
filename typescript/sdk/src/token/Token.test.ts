@@ -184,6 +184,8 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     symbol: 'TIA',
     name: 'TIA',
   },
+  [TokenStandard.CosmosHypCollateral]: null,
+  [TokenStandard.CosmosHypSynthetic]: null,
   [TokenStandard.CW20]: null,
   [TokenStandard.CWNative]: {
     chainName: testCosmosChain.name,

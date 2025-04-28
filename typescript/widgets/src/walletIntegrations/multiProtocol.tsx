@@ -29,14 +29,14 @@ import {
   useSolanaTransactionFns,
   useSolanaWalletDetails,
 } from './solana.js';
-import {
-  useStarknetAccount,
-  useStarknetActiveChain,
-  useStarknetConnectFn,
-  useStarknetDisconnectFn,
-  useStarknetTransactionFns,
-  useStarknetWalletDetails,
-} from './starknet.js';
+// import {
+//   useStarknetAccount,
+//   useStarknetActiveChain,
+//   useStarknetConnectFn,
+//   useStarknetDisconnectFn,
+//   useStarknetTransactionFns,
+//   useStarknetWalletDetails,
+// } from './starknet.js';
 import {
   AccountInfo,
   ActiveChainInfo,
@@ -58,7 +58,7 @@ export function useAccounts(
   const evmAccountInfo = useEthereumAccount(multiProvider);
   const solAccountInfo = useSolanaAccount(multiProvider);
   const cosmAccountInfo = useCosmosAccount(multiProvider);
-  const starknetAccountInfo = useStarknetAccount(multiProvider);
+  // const starknetAccountInfo = useStarknetAccount(multiProvider);
   // Filtered ready accounts
   const readyAccounts = useMemo(
     () =>
@@ -66,9 +66,9 @@ export function useAccounts(
         evmAccountInfo,
         solAccountInfo,
         cosmAccountInfo,
-        starknetAccountInfo,
+        // starknetAccountInfo,
       ].filter((a) => a.isReady),
-    [evmAccountInfo, solAccountInfo, cosmAccountInfo, starknetAccountInfo],
+    [evmAccountInfo, solAccountInfo, cosmAccountInfo],
   );
 
   // Check if any of the ready accounts are blacklisted
@@ -86,7 +86,7 @@ export function useAccounts(
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
         [ProtocolType.Cosmos]: cosmAccountInfo,
-        [ProtocolType.Starknet]: starknetAccountInfo,
+        [ProtocolType.Starknet]: cosmAccountInfo,
       },
       readyAccounts,
     }),
@@ -94,7 +94,7 @@ export function useAccounts(
       evmAccountInfo,
       solAccountInfo,
       cosmAccountInfo,
-      starknetAccountInfo,
+      cosmAccountInfo,
       readyAccounts,
     ],
   );
@@ -150,16 +150,15 @@ export function useWalletDetails(): Record<ProtocolType, WalletDetails> {
   const evmWallet = useEthereumWalletDetails();
   const solWallet = useSolanaWalletDetails();
   const cosmosWallet = useCosmosWalletDetails();
-  const starknetWallet = useStarknetWalletDetails();
 
   return useMemo(
     () => ({
       [ProtocolType.Ethereum]: evmWallet,
       [ProtocolType.Sealevel]: solWallet,
       [ProtocolType.Cosmos]: cosmosWallet,
-      [ProtocolType.Starknet]: starknetWallet,
+      [ProtocolType.Starknet]: cosmosWallet,
     }),
-    [evmWallet, solWallet, cosmosWallet, starknetWallet],
+    [evmWallet, solWallet, cosmosWallet, cosmosWallet],
   );
 }
 
@@ -167,16 +166,15 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
   const onConnectEthereum = useEthereumConnectFn();
   const onConnectSolana = useSolanaConnectFn();
   const onConnectCosmos = useCosmosConnectFn();
-  const onConnectStarknet = useStarknetConnectFn();
 
   return useMemo(
     () => ({
       [ProtocolType.Ethereum]: onConnectEthereum,
       [ProtocolType.Sealevel]: onConnectSolana,
       [ProtocolType.Cosmos]: onConnectCosmos,
-      [ProtocolType.Starknet]: onConnectStarknet,
+      [ProtocolType.Starknet]: onConnectCosmos,
     }),
-    [onConnectEthereum, onConnectSolana, onConnectCosmos, onConnectStarknet],
+    [onConnectEthereum, onConnectSolana, onConnectCosmos, onConnectCosmos],
   );
 }
 
@@ -184,7 +182,7 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   const disconnectEvm = useEthereumDisconnectFn();
   const disconnectSol = useSolanaDisconnectFn();
   const disconnectCosmos = useCosmosDisconnectFn();
-  const disconnectStarknet = useStarknetDisconnectFn();
+  const disconnectStarknet = useCosmosDisconnectFn();
 
   const onClickDisconnect =
     (env: ProtocolType, disconnectFn?: () => Promise<void> | void) =>
@@ -227,7 +225,7 @@ export function useActiveChains(multiProvider: MultiProtocolProvider): {
   const evmChain = useEthereumActiveChain(multiProvider);
   const solChain = useSolanaActiveChain(multiProvider);
   const cosmChain = useCosmosActiveChain(multiProvider);
-  const starknetChain = useStarknetActiveChain(multiProvider);
+  const starknetChain = useCosmosActiveChain(multiProvider);
 
   const readyChains = useMemo(
     () =>
@@ -263,7 +261,7 @@ export function useTransactionFns(
   const {
     switchNetwork: onSwitchStarknetNetwork,
     sendTransaction: onSendStarknetTx,
-  } = useStarknetTransactionFns(multiProvider);
+  } = useCosmosTransactionFns(multiProvider);
 
   return useMemo(
     () => ({

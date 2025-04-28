@@ -1,4 +1,4 @@
-import { ChainName, EvmIsmReader } from '@hyperlane-xyz/sdk';
+import { ChainName, CosmosIsmReader, EvmIsmReader } from '@hyperlane-xyz/sdk';
 import { Address, ProtocolType, stringifyObject } from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
@@ -19,19 +19,39 @@ export async function readIsmConfig({
   address: Address;
   out?: string;
 }): Promise<void> {
-  if (context.multiProvider.getProtocol(chain) === ProtocolType.Ethereum) {
-    const ismReader = new EvmIsmReader(context.multiProvider, chain);
-    const config = await ismReader.deriveIsmConfig(address);
-    const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
-    if (!out) {
-      logBlue(`ISM Config at ${address} on ${chain}:`);
-      log(stringConfig);
-    } else {
-      writeFileAtPath(out, stringConfig + '\n');
-      logBlue(`ISM Config written to ${out}.`);
-    }
-    return;
-  }
+  const protocolType = context.multiProvider.getProtocol(chain);
 
-  logRed('Unsupported chain. Currently this command supports EVM chains only.');
+  switch (protocolType) {
+    case ProtocolType.Ethereum: {
+      const ismReader = new EvmIsmReader(context.multiProvider, chain);
+      const config = await ismReader.deriveIsmConfig(address);
+      const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
+      if (!out) {
+        logBlue(`ISM Config at ${address} on ${chain}:`);
+        log(stringConfig);
+      } else {
+        writeFileAtPath(out, stringConfig + '\n');
+        logBlue(`ISM Config written to ${out}.`);
+      }
+      return;
+    }
+    case ProtocolType.Cosmos: {
+      const cosmosProvider =
+        await context.multiProtocolProvider!.getCosmJsProvider(chain);
+      const ismReader = new CosmosIsmReader(cosmosProvider);
+      const config = await ismReader.deriveIsmConfig(address);
+      const stringConfig = stringifyObject(config, resolveFileFormat(out), 2);
+      if (!out) {
+        logBlue(`ISM Config at ${address} on ${chain}:`);
+        log(stringConfig);
+      } else {
+        writeFileAtPath(out, stringConfig + '\n');
+        logBlue(`ISM Config written to ${out}.`);
+      }
+      return;
+    }
+    default: {
+      logRed(`Chain with protocol type ${protocolType} is not supported`);
+    }
+  }
 }

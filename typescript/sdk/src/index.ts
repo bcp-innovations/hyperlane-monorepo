@@ -68,6 +68,9 @@ export {
 } from './core/contracts.js';
 export { HyperlaneLifecyleEvent } from './core/events.js';
 export { EvmCoreReader } from './core/EvmCoreReader.js';
+export { CosmosCoreReader } from './core/CosmosCoreReader.js';
+export { CosmosIsmReader } from './ism/CosmosIsmReader.js';
+export { CosmosHookReader } from './hook/CosmosHookReader.js';
 export { HyperlaneCore } from './core/HyperlaneCore.js';
 export { HyperlaneCoreChecker } from './core/HyperlaneCoreChecker.js';
 export { HyperlaneCoreDeployer } from './core/HyperlaneCoreDeployer.js';
@@ -433,6 +436,7 @@ export {
 } from './providers/transactions/transformer/ethersV5/types.js';
 
 export { EvmCoreModule } from './core/EvmCoreModule.js';
+export { CosmosCoreModule } from './core/CosmosCoreModule.js';
 export {
   isProxy,
   proxyAdmin,
@@ -457,6 +461,7 @@ export {
   RemoteIcaRouterConfigSchema,
 } from './ica/types.js';
 export { EvmIsmModule } from './ism/EvmIsmModule.js';
+export { CosmosIsmModule } from './ism/CosmosIsmModule.js';
 export {
   chainMetadataToCosmosChain,
   chainMetadataToViemChain,
@@ -565,6 +570,8 @@ export {
 export { HypERC20Deployer, HypERC721Deployer } from './token/deploy.js';
 export { EvmERC20WarpModule } from './token/EvmERC20WarpModule.js';
 export { EvmERC20WarpRouteReader } from './token/EvmERC20WarpRouteReader.js';
+export { CosmosWarpModule } from './token/CosmosWarpModule.js';
+export { CosmosWarpRouteReader } from './token/CosmosWarpRouteReader.js';
 export { IToken, TokenArgs, TokenConfigSchema } from './token/IToken.js';
 export { Token } from './token/Token.js';
 export { TokenAmount } from './token/TokenAmount.js';

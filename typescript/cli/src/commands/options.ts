@@ -181,6 +181,12 @@ export const chainCommandOption: Options = {
   description: 'The specific chain to perform operations with.',
 };
 
+export const standardCommandOption: Options = {
+  type: 'string',
+  description:
+    'The specific token standard (e.g. EvmHypCollateral, EvmHypXERC20)',
+};
+
 export const symbolCommandOption: Options = {
   type: 'string',
   description: 'Token symbol (e.g. ETH, USDC)',

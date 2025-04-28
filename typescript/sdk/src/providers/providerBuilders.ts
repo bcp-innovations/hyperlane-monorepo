@@ -1,10 +1,10 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { StargateClient } from '@cosmjs/stargate';
 import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
 import { RpcProvider as StarknetRpcProvider } from 'starknet';
 import { createPublicClient, http } from 'viem';
 
+import { HyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
 import { ProtocolType, isNumeric } from '@hyperlane-xyz/utils';
 
 import { ChainMetadata, RpcUrl } from '../metadata/chainMetadataTypes.js';
@@ -96,7 +96,7 @@ export function defaultCosmJsProviderBuilder(
   if (!rpcUrls.length) throw new Error('No RPC URLs provided');
   return {
     type: ProviderType.CosmJs,
-    provider: StargateClient.connect(rpcUrls[0].http),
+    provider: HyperlaneModuleClient.connect(rpcUrls[0].http),
   };
 }
 
@@ -148,6 +148,6 @@ export const protocolToDefaultProviderBuilder: Record<
 > = {
   [ProtocolType.Ethereum]: defaultEthersV5ProviderBuilder,
   [ProtocolType.Sealevel]: defaultSolProviderBuilder,
-  [ProtocolType.Cosmos]: defaultCosmJsWasmProviderBuilder,
+  [ProtocolType.Cosmos]: defaultCosmJsProviderBuilder,
   [ProtocolType.Starknet]: defaultStarknetJsProviderBuilder,
 };

@@ -4,7 +4,7 @@ import type {
   ExecuteInstruction,
 } from '@cosmjs/cosmwasm-stargate';
 import type { EncodeObject as CmTransaction } from '@cosmjs/proto-signing';
-import type { DeliverTxResponse, StargateClient } from '@cosmjs/stargate';
+import type { DeliverTxResponse } from '@cosmjs/stargate';
 import type {
   Connection,
   Transaction as SolTransaction,
@@ -29,6 +29,7 @@ import type {
   TransactionReceipt as VTransactionReceipt,
 } from 'viem';
 
+import { HyperlaneModuleClient } from '@hyperlane-xyz/cosmos-sdk';
 import { Annotated, ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum ProviderType {
@@ -67,10 +68,10 @@ type ProtocolTypesMapping = {
     receipt: SolanaWeb3TransactionReceipt;
   };
   [ProtocolType.Cosmos]: {
-    transaction: CosmJsWasmTransaction;
-    provider: CosmJsWasmProvider;
-    contract: CosmJsWasmContract;
-    receipt: CosmJsWasmTransactionReceipt;
+    transaction: CosmJsTransaction;
+    provider: CosmJsProvider;
+    contract: CosmJsContract;
+    receipt: CosmJsTransactionReceipt;
   };
   [ProtocolType.Starknet]: {
     transaction: StarknetJsTransaction;
@@ -128,9 +129,9 @@ export interface SolanaWeb3Provider extends TypedProviderBase<Connection> {
 }
 
 export interface CosmJsProvider
-  extends TypedProviderBase<Promise<StargateClient>> {
+  extends TypedProviderBase<Promise<HyperlaneModuleClient>> {
   type: ProviderType.CosmJs;
-  provider: Promise<StargateClient>;
+  provider: Promise<HyperlaneModuleClient>;
 }
 
 export interface CosmJsWasmProvider
@@ -222,6 +223,8 @@ export interface EthersV5Transaction
 }
 
 export type AnnotatedEV5Transaction = Annotated<EV5Transaction>;
+
+export type AnnotatedCosmJsTransaction = Annotated<CmTransaction>;
 
 export interface ViemTransaction extends TypedTransactionBase<VTransaction> {
   type: ProviderType.Viem;
