@@ -74,6 +74,6 @@ server.add(CCTPServiceAbi, [
 
 // Start Server
 const app = server.makeApp(config.SERVER_URL_PREFIX);
-app.listen(config.SERVER_PORT, () =>
+app.listen(parseInt(config.SERVER_PORT), '0.0.0.0', () =>
   console.log(`Listening on port ${config.SERVER_PORT}`),
 );
